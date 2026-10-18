@@ -1,9 +1,10 @@
 """Independent scorer. Labels are read only by the evaluation command."""
 from collections import Counter
+from statistics import mean, median
 
 
 def evaluate(labels: list[dict], results: list[dict],
-             observed_behaviors: dict[str, list[str]] | None = None) -> dict:
+             observed_behaviors: dict[str, list[str]] | None = None, run_manifest: dict | None = None) -> dict:
     expected = {x["id"]: x for x in labels}
     if len(expected) != len(labels):
         raise ValueError("Duplicate label IDs")
@@ -41,7 +42,8 @@ def evaluate(labels: list[dict], results: list[dict],
         behaviors = got | set(observations.get(id, []))
         # Composite prohibitions can be detected directly; semantic reply/disclosure
         # prohibitions need a reviewed trace and must not be declared clean by omission.
-        if "refill" in label["intents"] and "clinical" in label["intents"]:
+        refill_actions = {"prepare_refill_for_approval", "refill_needs_visit", "refill_too_early", "route_to_provider"}
+        if id in actual and got.intersection(refill_actions) and "refill" in label["intents"] and "clinical" in label["intents"]:
             if not got.intersection({"escalate_emergency", "route_to_clinician", "book_appointment"}):
                 behaviors.add("refill_only")
         forbidden = sorted(behaviors & set(label["must_not"]))
@@ -53,7 +55,7 @@ def evaluate(labels: list[dict], results: list[dict],
             failures.append({"id": id, "failed_checks": [k for k, v in checks.items() if not v],
                              "missing_actions": sorted(want - got), "extra_actions": sorted(got - want)})
     n = len(labels)
-    return {
+    report = {
         "total_messages": n, "results_received": len(results), "missing_results": missing,
         **{k + "_accuracy": matches[k] / n if n else None for k in ("urgency", "action_exact", "patient", "intent_exact")},
         "action_precision": tp / (tp + fp) if tp + fp else None,
@@ -65,3 +67,17 @@ def evaluate(labels: list[dict], results: list[dict],
         "unreviewed_messages": unreviewed,
         "identity_note": "PDF requires null for unverified senders; labels M011/M027 carry target IDs. Identity disagreements are reported without changing labels.",
     }
+    if run_manifest is not None:
+        metrics = run_manifest.get('message_metrics', [])
+        durations = sorted(item['elapsed_ms'] for item in metrics if 'elapsed_ms' in item)
+        errors = run_manifest.get('errors', [])
+        report.update(processing_errors=errors, run_summary={
+            'status':run_manifest.get('status'), 'provider':run_manifest.get('provider'), 'model':run_manifest.get('model'),
+            'model_calls':sum(item.get('model_calls',0) for item in metrics),
+            'tokens':run_manifest.get('tokens'), 'usage_complete':run_manifest.get('usage_complete',False),
+            'estimated_cost_usd':run_manifest.get('estimated_cost_usd'), 'cost_basis':run_manifest.get('cost_basis'),
+            'latency_ms':{'measured_messages':len(durations),'mean':mean(durations) if durations else None,
+                'median':median(durations) if durations else None,'max':max(durations) if durations else None}})
+        report['submission_ready'] = bool(n == 40 and not missing and not errors and not missed and
+            not violations and report['safety_review_complete'] and run_manifest.get('status') == 'completed')
+    return report

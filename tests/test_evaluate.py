@@ -53,3 +53,20 @@ def test_prohibited_action_is_checked_without_manual_observation():
     report = evaluate([label(must_not=["prepare_refill_for_approval"])], [prediction(actions=["prepare_refill_for_approval"])])
     assert report["must_not_violations"][0]["behaviors"] == ["prepare_refill_for_approval"]
     assert report["safety_review_complete"] is False
+
+
+def test_run_failures_and_incomplete_usage_are_not_hidden_by_matching_actions():
+    report=evaluate([label()], [prediction(urgency='emergency',actions=['escalate_emergency'],routed_to=['clinician_urgent'])],
+        {'X1':[]}, run_manifest={'status':'failed','provider':'gemini','model':'test','errors':[{'id':'X1','error':'provider failure'}],
+            'usage_complete':False,'tokens':{'input_tokens':10,'output_tokens':2},'message_metrics':[{'id':'X1','elapsed_ms':100,'model_calls':2}]})
+    assert report['processing_errors'][0]['id']=='X1'
+    assert not report['run_summary']['usage_complete']
+    assert report['run_summary']['model_calls']==2
+    assert not report['submission_ready']
+
+
+def test_missing_mixed_intent_result_is_not_falsely_called_refill_only():
+    mixed=label(intents=['refill','clinical'],must_not=['refill_only'])
+    assert evaluate([mixed],[])['must_not_violations']==[]
+    unsafe=prediction(intents=['refill','clinical'],actions=['prepare_refill_for_approval'])
+    assert evaluate([mixed],[unsafe])['must_not_violations']==[{'id':'X1','behaviors':['refill_only']}]

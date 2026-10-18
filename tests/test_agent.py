@@ -160,14 +160,13 @@ def test_failed_required_handoff_never_returns_success_and_keeps_failed_trace():
     asyncio.run(scenario())
 
 
-def test_saved_draft_requests_final_result_without_repeating_tools():
+def test_terminal_finish_does_not_request_an_extra_final_response():
     async def scenario():
         api = Responses([
             response([tool("triage_message", {"urgency":"routine", "intents":["admin"]})]),
-            response([tool("draft_reply", {"actions":["answer_directly"], "language":"English"})]),
-            response(text=final(intents=["admin"], actions=["answer_directly"])),
+            response([tool("finish_message", {"actions":["answer_directly"]})]),
         ])
         outcome = await Agent(LocalMCP(), SimpleNamespace(responses=api), "test-model").process(message())
         assert outcome["error"] is None
-        assert api.requests[-1]["tool_choice"] == "none"
+        assert len(api.requests) == 2
     asyncio.run(scenario())

@@ -16,7 +16,11 @@ To reproduce the MCP demonstration locally after setup:
 
 ## Status
 
-The interactive workspace and batch commands have 69 passing offline tests. Gemini is configured as the default. Live requests authenticate and execute MCP tools. The latest attempt prepared a refill pending provider approval, then hit a 60-second API timeout during finalization and recorded a human-review fallback. The preceding attempt also timed out. These are failed runs, retained locally in `output/gemini-smoke-3` and `output/gemini-smoke-4` with scoped evaluations. End-to-end live reliability and the 40-message evaluation remain pending; no full-dataset accuracy is claimed. The earlier OpenAI attempt failed due exhausted credits.
+**89 offline tests pass. Live acceptance is blocked by Gemini HTTP 429, classified as daily quota exhaustion.** The full 40-message batch was attempted in original order, but its first model request was rejected. The agent recorded a human-review fallback for M001 and stopped, leaving 39 messages explicitly unprocessed. This is a failed benchmark, not a measured successful model run. The five required emergency cases remain missing in that benchmark; submission readiness is false.
+
+Actual evidence is included in [evaluation/benchmark-v1/evaluation.json](evaluation/benchmark-v1/evaluation.json), alongside [run metadata](evaluation/benchmark-v1/run.json), [traces](evaluation/benchmark-v1/traces.jsonl) and observations. Two failed live gates are retained under `evaluation/reliability-smoke-v1` and `evaluation/reliability-smoke-v2`. Zero accuracy/recall values in the blocked report reflect missing coverage and fallback results; they must not be presented as measured Gemini performance. Usage is incomplete and USD cost is unknown, not zero.
+
+Four unseen scenarios passed a [scripted-model CLI/MCP rehearsal](evaluation/offline-rehearsal-v1/provenance.json). It validates real tool execution and policy boundaries, not live model understanding. Terminal completion now removes the former final model request; its live success gate still needs to be rerun when quota is available. Historical timeout attempts remain locally under ignored `output/`.
 
 ## Setup and run on Windows
 
@@ -38,6 +42,8 @@ The default command opens an interactive workspace with command completion, sess
 
 Browsing works without an API key. Processing connects lazily and keeps one MCP server alive throughout the session, so simulated changes persist between messages. Each session saves results under a unique `output/chat-*` folder. The same sample ID is processed once per session. A transport interruption requires a restart; a failed save blocks further processing while keeping the latest result accessible through `/last` and `/trace`.
 
+Messages are independent, even in the interactive workspace. Sender details and clinic state persist, but conversational history does not. Follow-ups must restate the relevant request and appointment context; “Friday works” alone is not a supported continuation.
+
 The original `inspect`, `run` and `evaluate` batch commands remain available. Launch explicitly with `python -m clinic_assist chat` to pass options such as `--provider`, `--model`, `--data` or `--output`.
 
 Create a Gemini key in [Google AI Studio](https://aistudio.google.com/apikey) and set `GEMINI_API_KEY` in `.env` locally. Do not paste the key into a chat or commit it. `LLM_PROVIDER` defaults to `gemini`; `GEMINI_MODEL` defaults to `gemini-3.8-flash` and can be overridden with `--model`. This is a starting model choice, not a benchmark conclusion. Google's current pricing lists free-tier text input/output for this model, but available quotas depend on the project. Optional token rates in `.env` enable an approximate cost; use rates for the selected provider/model and do not assume a free tier based only on the key.
@@ -45,6 +51,8 @@ Create a Gemini key in [Google AI Studio](https://aistudio.google.com/apikey) an
 The compatibility adapter uses the installed OpenAI SDK against **Google's** `generativelanguage.googleapis.com` endpoint. Gemini credentials are never sent to OpenAI. It translates tool definitions and conversation history, preserves Gemini thought signatures and tracks prompt/completion tokens. No new SDK dependency is required.
 
 `GEMINI_REQUEST_INTERVAL` defaults to 12 seconds between model requests and can be overridden with `--request-interval`. Short 429 rate limits get bounded retries that respect Retry-After. Daily/exhausted quotas are not retried indefinitely; invalid credentials or exhausted provider quota stop the remaining batch and leave unprocessed IDs explicit. Check your actual limits in AI Studio before running all 40 cases. One message may require several model requests.
+
+`MODEL_REQUEST_TIMEOUT` controls the SDK request timeout in seconds (default 60). Timeout/connection failures retry the same model request once; executed MCP operations are not replayed. An exhausted connection retry or terminal provider-access failure stops the batch. No model, provider or billing changes are made automatically.
 
 To explicitly use the older provider configuration, set `OPENAI_API_KEY`, optionally `OPENAI_MODEL`, and pass `--provider openai`. There is no silent fallback between providers.
 
@@ -90,11 +98,11 @@ No sample IDs or expected outcomes are used by the runtime. The trusted host sup
 ## Architecture and boundaries
 
 - `data.py` loads only clinic, patient, medication and appointment records into runtime state. It validates relationships and fixes the clinic clock to **2026-11-09, America/Chicago**.
-- `contracts.py` validates incoming messages and the exact result vocabulary.
+- `contracts.py` requires timezone-aware incoming timestamps and validates the exact result vocabulary.
 - `clinic.py` owns policy checks, source-bound verification, per-run state and operation events. Verification is reset for every message; state persists across messages.
 - `server.py` exposes typed MCP tools. `begin_message` and `message_audit` are host-only capabilities filtered out of model tools; the execution loop also rejects attempts to call them.
-- `agent.py` discovers MCP tools and runs a bounded provider-neutral function loop. `providers.py` adapts it to Gemini Chat Completions; explicit OpenAI uses Responses. Triage is required first. An emergency triggers immediate routing and stops administrative work.
-- `replies.py` renders final English/Spanish reply drafts from policy and operation evidence. Arbitrary model text is not forwarded. Emergency replies use only the clinic-approved safety template. Drafts are never sent.
+- `agent.py` runs a bounded provider-neutral function loop. `providers.py` adapts it to Gemini Chat Completions; explicit OpenAI uses Responses. Triage is required first. `finish_message(actions)` validates evidence and completes the result immediately, with no final model round trip. Legacy JSON completion uses the same validator. `draft_reply` remains a compatibility tool but is hidden from the model.
+- `replies.py` renders English/Spanish drafts from policy and operation evidence. Visit-required claims need a supporting refill check; alternatives use the latest search. Triage chooses the response language from the current message or explicit request, falling back to verified preference and then English. An emergency immediately routes to the urgent queue and blocks further mutations. If discovered after a prior mutation, the operation remains in the trace/result and the run records a safety failure; the reply remains emergency-only. Drafts are never sent.
 - `evaluate.py` is independent of the agent and is the only runtime component that consumes expected labels through the evaluate command. `inspect` can inspect label IDs for input validation.
 
 The local stdio client is trusted. Do not expose this server as a public service: a direct client can call host tools to bind sender metadata. Production transport identity and authorisation require a different boundary.
@@ -103,7 +111,7 @@ Refill preparation creates a pending approval request; it never approves, dispen
 
 ## Evaluation and safety review
 
-Each run saves `results.jsonl`, `traces.jsonl` and `run.json`. Traces contain actual calls, errors, routes and state-changing events. `run.json` records provider, model, usage, processing errors, unprocessed IDs and optional estimated cost. A failed transport stops the run with explicit evidence rather than inventing a successful handoff.
+Each run saves `results.jsonl`, `traces.jsonl` and `run.json`. Traces contain actual operations plus request attempts, model step, elapsed time, HTTP status, failure stage, provider request ID when supplied and reported tokens. Credentials, raw provider error messages and private reasoning are excluded. `run.json` records per-message latency, request counts, processing errors, unprocessed IDs and optional cost. Unknown usage stays explicit, including on interrupted runs. The evaluator reads adjacent run metadata to expose provider failures and latency alongside classification scores.
 
 The evaluator reports accepted urgency accuracy, exact action-set accuracy, action precision/recall, patient identity and intent accuracy, emergency recall, missed emergencies and prohibited behaviors. Required emergency cases are labels requiring `escalate_emergency` or accepting only emergency; recall requires actual escalation output and urgent routing, not just an urgency string.
 
@@ -126,13 +134,13 @@ The provided labels for M011 and M027 contain target patient IDs despite failed 
 
 ## What was reused and built
 
-Reused: the supplied synthetic data, official MCP Python SDK, OpenAI Python SDK, Pydantic, pytest, python-dotenv and tzdata. Built here: clinic operations and policy checks, scoped verification, MCP tool definitions, orchestration, constrained reply generation, evaluator, trace/failure reporting and tests. AI coding assistance was used.
+Reused: supplied synthetic data, official MCP and OpenAI Python SDKs, Pydantic, pytest, python-dotenv, tzdata, Rich and prompt-toolkit. Built here: clinic policy operations, scoped verification, MCP tools, orchestration, terminal completion, constrained replies, evaluator, request/failure accounting and interactive workspace. AI coding assistance was used.
 
 Official references: [Gemini OpenAI compatibility](https://ai.google.dev/gemini-api/docs/openai), [Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing), [Gemini rate limits](https://ai.google.dev/gemini-api/docs/rate-limits), [OpenAI function calling](https://developers.openai.com/api/docs/guides/function-calling), and [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk).
 
 ## Limitations and another week
 
-Live triage, Spanish understanding and unseen-message performance need measurement. Final drafts are intentionally constrained and can be terse; scheduling clarification is conservative. All medication entries are interpreted as the supplied active list. The seed schedule is loaded as supplied; new changes enforce policy without rewriting historical source entries. This is a sequential single-run system with no durable queue, external notification or outbound messaging integration. Token totals may be incomplete when a malformed or blocked HTTP response raises before its usage is recorded.
+Live triage, Spanish understanding, terminal completion and unseen-message performance still need successful measurement once quota is available. Final drafts are intentionally constrained and can be terse; scheduling clarification is conservative. All medication entries are interpreted as the supplied active list. The seed schedule is loaded as supplied; new changes enforce policy without rewriting historical entries. This is a sequential single-run system with no conversation memory, durable queue, external notification or outbound messaging. Reported usage from unusable successful responses is retained; rejected or interrupted requests can still have unknown usage, so recorded totals may be lower bounds.
 
 With another week: run and analyse the full dataset, add independently authored adversarial cases, improve intent/date extraction from observed failures, evaluate stronger models against cost, add evidence-aware clarification state and explicit provider/appointment consent handling, and expand reply templates based on measured gaps. Avoid tuning runtime rules to sample IDs.
 

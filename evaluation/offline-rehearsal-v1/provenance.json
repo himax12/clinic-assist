@@ -1,0 +1,29 @@
+{
+  "execution_kind": "scripted_model_real_cli_and_mcp",
+  "live_llm_requests": 0,
+  "is_model_accuracy_benchmark": false,
+  "token_values": "Scripted fixtures; not billed provider usage.",
+  "test": "tests/test_rehearsal.py::test_unseen_cli_rehearsal_with_real_mcp_and_scripted_model",
+  "cases": [
+    {
+      "id": "NEW-EMERGENCY",
+      "scenario": "Spanish emergency escalation",
+      "assertions": "passed"
+    },
+    {
+      "id": "NEW-PRIVATE",
+      "scenario": "Unverified sender denied access",
+      "assertions": "passed"
+    },
+    {
+      "id": "NEW-MIXED",
+      "scenario": "Clinical concern routed with pending refill",
+      "assertions": "passed"
+    },
+    {
+      "id": "NEW-LEAVE",
+      "scenario": "Provider-leave request offers later valid alternatives without booking",
+      "assertions": "passed"
+    }
+  ]
+}

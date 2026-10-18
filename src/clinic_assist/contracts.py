@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 Action = Literal[
     "escalate_emergency", "route_to_clinician", "route_to_provider",
@@ -15,12 +15,13 @@ Action = Literal[
 Queue = Literal["clinician_urgent", "clinician_routine", "provider_refills", "front_desk", "billing"]
 Urgency = Literal["emergency", "urgent", "routine"]
 Intent = Literal["refill", "schedule", "reschedule", "cancel", "billing", "records", "clinical", "admin", "new_patient", "third_party", "other", "spam"]
+ResponseLanguage = Literal["English", "Spanish", "unspecified"]
 
 
 class Message(BaseModel):
     model_config = ConfigDict(extra="forbid")
     id: str = Field(min_length=1)
-    received_at: datetime
+    received_at: AwareDatetime
     channel: Literal["sms", "portal", "email"]
     from_name: str
     from_contact: str

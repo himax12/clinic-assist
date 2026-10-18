@@ -1,10 +1,13 @@
 """Provider-neutral function loop backed by an actual MCP client session."""
 import json
+import time
+from openai import APIConnectionError, APIStatusError
 
 from .contracts import Message, MessageResult
 from .prompts import SYSTEM
 
 HOST_TOOLS = {"begin_message", "message_audit"}
+HIDDEN_TOOLS = HOST_TOOLS | {"draft_reply"}
 MUTATIONS = {"prepare_refill_for_approval", "book_appointment", "cancel_appointment", "reschedule_appointment"}
 
 
@@ -34,7 +37,11 @@ class Agent:
         return value
 
     async def process(self, raw_message: dict) -> dict:
+        self.started_at = time.monotonic()
+        self.request_events = []
+        self.provider_unavailable = False
         message = Message.model_validate(raw_message)
+        self.current_id = message.id
         self.trace = []
         self.usage = {"input_tokens": 0, "output_tokens": 0}
         self.provider_error_status = None
@@ -42,52 +49,43 @@ class Agent:
         policy = await self._call("public_policy", {}, host=True)
         tools = [{"type": "function", "name": t.name, "description": t.description,
                   "parameters": t.inputSchema, "strict": False}
-                 for t in (await self.session.list_tools()).tools if t.name not in HOST_TOOLS]
+                 for t in (await self.session.list_tools()).tools if t.name not in HIDDEN_TOOLS]
         allowed = {t["name"] for t in tools}
         instructions = SYSTEM + "\nClinic policy:\n" + json.dumps(policy, ensure_ascii=False)
         instructions += "\nResult JSON schema:\n" + json.dumps(MessageResult.model_json_schema())
         history = [{"role": "user", "content": json.dumps(message.model_dump(mode="json"), ensure_ascii=False)}]
         error = None
-        finalize = False
         try:
             for step in range(self.max_steps):
                 kwargs = dict(model=self.model, instructions=instructions, input=history, tools=tools,
                               parallel_tool_calls=False, store=False, max_output_tokens=6000)
                 if step == 0:
                     kwargs["tool_choice"] = {"type": "function", "name": "triage_message"}
-                elif finalize:
-                    kwargs["tool_choice"] = "none"
-                response = await self.client.responses.create(**kwargs)
-                for key in self.usage:
-                    self.usage[key] += getattr(response.usage, key, 0) if response.usage else 0
+                observed = getattr(self.client, "events", None)
+                cursor = len(observed) if observed is not None else 0
+                started = time.monotonic()
+                response = None
+                try:
+                    response = await self.client.responses.create(**kwargs)
+                finally:
+                    if observed is not None:
+                        events = [dict(event, model_step=step + 1) for event in observed[cursor:]]
+                    else:
+                        usage = getattr(response, "usage", None)
+                        events = [dict(model=self.model, model_step=step + 1, attempt=1,
+                            elapsed_ms=round((time.monotonic()-started)*1000, 2),
+                            status="completed" if response is not None else "failed", request_id=None,
+                            http_status=None, failure_stage=None if response else "request", usage_known=usage is not None,
+                            input_tokens=getattr(usage, "input_tokens", None), output_tokens=getattr(usage, "output_tokens", None))]
+                    self.request_events.extend(events)
+                    for event in events:
+                        for key in self.usage:
+                            self.usage[key] += event.get(key) or 0
                 calls = [item for item in response.output if item.type == "function_call"]
                 history.extend(item.model_dump(exclude_none=True) for item in response.output)
                 if not calls:
                     proposal = MessageResult.model_validate_json(response.output_text)
-                    audit = await self._call("message_audit", {}, host=True)
-                    executed = {e["kind"] for e in audit["events"]}
-                    invented = (set(proposal.actions) & MUTATIONS) - executed
-                    queues = {r["queue"] for r in audit["routes"]}
-                    required_queues = {"route_to_billing": {"billing"}, "route_to_front_desk": {"front_desk"},
-                        "route_to_provider": {"provider_refills"}, "route_to_clinician": {"clinician_urgent", "clinician_routine"}}
-                    invented |= {action for action, required in required_queues.items()
-                                 if action in proposal.actions and not (queues & required)}
-                    if "escalate_emergency" in proposal.actions and audit["urgency"] != "emergency":
-                        invented.add("escalate_emergency")
-                    if invented:
-                        raise ValueError("Result claims unperformed mutations: " + ",".join(sorted(invented)))
-                    if not audit["urgency"]:
-                        raise ValueError("Missing triage")
-                    proposal.id = message.id
-                    proposal.patient_id = audit["patient_id"]
-                    proposal.urgency = audit["urgency"]
-                    proposal.intents = audit["intents"]
-                    proposal.routed_to = sorted({r["queue"] for r in audit["routes"]})
-                    proposal.actions = sorted(set(proposal.actions) | (executed & MUTATIONS))
-                    patient = await self._call("find_patient", {}, host=True)
-                    draft = await self._call("draft_reply", {"actions": proposal.actions, "language": patient.get("preferred_language", "English")}, host=True)
-                    proposal.reply_draft = draft["reply_draft"]
-                    return await self._finish(proposal, None)
+                    return await self._complete(proposal.actions)
                 for call in calls:
                     if call.name not in allowed or call.name in HOST_TOOLS:
                         raise ValueError("Model attempted a host-only or unknown tool")
@@ -95,23 +93,21 @@ class Agent:
                         raise ValueError("Message must be triaged first")
                     arguments = json.loads(call.arguments)
                     value = await self._call(call.name, arguments)
-                    finalize = call.name == "draft_reply" and "error" not in value
                     history.append({"type": "function_call_output", "call_id": call.call_id,
                                     "output": json.dumps(value, ensure_ascii=False)})
+                    if call.name == "finish_message" and "error" not in value:
+                        return await self._completed_value(value)
                     audit = await self._call("message_audit", {}, host=True)
                     if audit["urgency"] == "emergency":
-                        patient = await self._call("find_patient", {}, host=True)
-                        draft = await self._call("draft_reply", {"actions": ["escalate_emergency"], "language": patient.get("preferred_language", "English")}, host=True)
-                        result = MessageResult(id=message.id, patient_id=audit["patient_id"],
-                            intents=audit["intents"], urgency="emergency", actions=["escalate_emergency"],
-                            routed_to=["clinician_urgent"], tool_calls=[], reply_draft=draft["reply_draft"])
-                        return await self._finish(result, None)
+                        return await self._complete(["escalate_emergency"])
             raise RuntimeError("Tool iteration limit reached")
         except Exception as exc:
             # Preserve performed operations and hand off uncertain processing to a
             # clinician. Do not pretend a partial run completed all requests.
-            error = type(exc).__name__ + ": " + str(exc)
+            error = type(exc).__name__ + ": " + ("Provider request failed; inspect request_events" if isinstance(exc, (APIConnectionError, APIStatusError)) else str(exc))
             self.provider_error_status = getattr(exc, "status_code", None)
+            self.provider_unavailable = isinstance(exc, APIConnectionError) or (
+                self.provider_error_status in {400,401,402,403,404,422,429} or (self.provider_error_status or 0) >= 500)
         audit = await self._call("message_audit", {}, host=True)
         if audit["urgency"] is None:
             await self._call("triage_message", {"urgency": "urgent", "intents": ["other"]}, host=True)
@@ -119,9 +115,18 @@ class Agent:
         audit = await self._call("message_audit", {}, host=True)
         actions = sorted({e["kind"] for e in audit["events"]} & MUTATIONS)
         actions.append("escalate_emergency" if audit["urgency"] == "emergency" else "route_to_clinician")
-        draft = await self._call("draft_reply", {"actions": actions}, host=True)
-        result = MessageResult(id=message.id, patient_id=audit["patient_id"], intents=audit["intents"],
-            urgency=audit["urgency"], actions=actions, routed_to=["clinician_urgent"], tool_calls=[], reply_draft=draft["reply_draft"])
+        return await self._complete(actions, error)
+
+    async def _complete(self, actions, error=None):
+        value = await self._call("finish_message", {"actions": actions}, host=True)
+        return await self._completed_value(value, error)
+
+    async def _completed_value(self, value, error=None):
+        error = error or value.get("safety_error")
+        audit = await self._call("message_audit", {}, host=True)
+        result = MessageResult(id=self.current_id, patient_id=audit["patient_id"],
+            intents=audit["intents"], urgency=audit["urgency"], actions=value["actions"],
+            routed_to=sorted({r["queue"] for r in audit["routes"]}), tool_calls=[], reply_draft=value["reply_draft"])
         return await self._finish(result, error)
 
     async def _finish(self, result: MessageResult, error: str | None) -> dict:
@@ -129,4 +134,8 @@ class Agent:
         result.tool_calls = [t["name"] for t in self.trace]
         result.routed_to = sorted({r["queue"] for r in audit["routes"]})
         return {"result": MessageResult.model_validate(result.model_dump()).model_dump(), "trace": self.trace,
-                "audit": audit, "usage": self.usage, "error": error, "provider_error_status": self.provider_error_status, "model": self.model}
+                "audit": audit, "usage": self.usage, "error": error, "provider_error_status": self.provider_error_status,
+                "provider_unavailable": self.provider_unavailable, "request_events": self.request_events,
+                "metrics": {"elapsed_ms": round((time.monotonic()-self.started_at)*1000,2),
+                    "model_calls": len(self.request_events),
+                    "unknown_usage_attempts": sum(not e["usage_known"] for e in self.request_events)}, "model": self.model}

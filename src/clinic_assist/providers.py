@@ -1,6 +1,8 @@
 """Provider translation at the HTTP boundary; policy and MCP remain independent."""
 import asyncio
 import copy
+import os
+import json
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -8,7 +10,7 @@ from email.utils import parsedate_to_datetime
 import time
 from types import SimpleNamespace
 
-from openai import AsyncOpenAI, RateLimitError
+from openai import AsyncOpenAI, RateLimitError, APIConnectionError
 
 GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 DEFAULT_GEMINI_MODEL = "gemini-3.8-flash"
@@ -44,15 +46,113 @@ def chat_history(instructions: str, history: list[dict]) -> list[dict]:
     return messages
 
 
-class GeminiAdapter:
-    """Expose the small Responses-shaped surface used by Agent via Google chat."""
-    def __init__(self, client, min_interval: float = 12, max_retries: int = 2, sleep=asyncio.sleep):
+class RequestAttempts:
+    def __init__(self, min_interval=0, max_retries=2, sleep=asyncio.sleep):
         if min_interval < 0 or not 0 <= max_retries <= 3:
             raise ValueError("Invalid pacing or retry configuration")
-        self.client = client
-        self.responses = self
         self.min_interval, self.max_retries, self.sleep = min_interval, max_retries, sleep
-        self._last_attempt: float | None = None
+        self._last_attempt = None
+        self.events = []
+
+    async def request(self, method, request, chat=False):
+        rate_retries = transport_retries = 0
+        attempt = 0
+        while True:
+            if self._last_attempt is not None:
+                delay = self.min_interval - (time.monotonic() - self._last_attempt)
+                if delay > 0:
+                    await self.sleep(delay)
+            self._last_attempt = started = time.monotonic()
+            attempt += 1
+            event = dict(model=request['model'], attempt=attempt, started_at=datetime.now(timezone.utc).isoformat(),
+                elapsed_ms=0, http_status=None, request_id=None, status='pending', failure_stage=None,
+                error_type=None, input_tokens=None, output_tokens=None, usage_known=False)
+            self.events.append(event)
+            retry = None
+            try:
+                reply = await method(**request)
+                usage = reply.usage
+                event.update(status='completed', http_status=200, request_id=getattr(reply, '_request_id', None),
+                    input_tokens=getattr(usage, 'prompt_tokens' if chat else 'input_tokens', None),
+                    output_tokens=getattr(usage, 'completion_tokens' if chat else 'output_tokens', None),
+                    usage_known=usage is not None)
+                return reply
+            except Exception as exc:
+                event.update(status='failed', failure_stage='transport' if isinstance(exc, APIConnectionError) else 'provider',
+                    error_type=type(exc).__name__, http_status=getattr(exc, 'status_code', None),
+                    request_id=getattr(exc, 'request_id', None))
+                body = getattr(exc, 'body', None)
+                if isinstance(body, str):
+                    try:
+                        body = json.loads(body)
+                    except ValueError:
+                        body = {}
+                body = body if isinstance(body, dict) else {}
+                body = body.get('error', body)
+                body = body if isinstance(body, dict) else {}
+                if isinstance(body.get('message'), str) and body['message'].lstrip().startswith('{'):
+                    try:
+                        nested = json.loads(body['message'])
+                        body = nested.get('error', nested) if isinstance(nested, dict) else body
+                    except ValueError:
+                        pass
+                reason = str(exc).casefold()
+                daily = any(value in reason for value in ('daily','per day','per_day','perday'))
+                exhausted = daily or any(value in reason for value in ('limit: 0','limit 0','insufficient_quota','credit_balance_exhausted'))
+                if isinstance(exc, RateLimitError):
+                    event['limit_category'] = 'daily_quota' if daily else ('exhausted_quota' if exhausted else 'rate_limit')
+                details = body.get('details', [])
+                event['provider_error_code'] = body.get('status', body.get('code'))
+                event['quota_limits'] = [{key: value.get(key) for key in ('quotaMetric', 'quotaId', 'quotaValue')}
+                    for detail in details if isinstance(detail, dict)
+                    for value in detail.get('violations', []) if isinstance(value, dict)]
+                retry_hint = None
+                for detail in details:
+                    if isinstance(detail, dict) and 'retryDelay' in detail:
+                        try:
+                            retry_hint = float(str(detail['retryDelay']).removesuffix('s'))
+                        except ValueError:
+                            pass
+                event['retry_after_seconds'] = retry_hint
+                if isinstance(exc, APIConnectionError) and transport_retries < 1:
+                    transport_retries += 1
+                    retry = 2
+                elif isinstance(exc, RateLimitError) and rate_retries < self.max_retries:
+                    if not exhausted:
+                        retry = retry_hint if retry_hint is not None else 2 ** (rate_retries + 1)
+                        value = exc.response.headers.get('retry-after')
+                        if value:
+                            try:
+                                retry = max(0, float(value))
+                            except ValueError:
+                                try:
+                                    retry = max(0, (parsedate_to_datetime(value) - datetime.now(timezone.utc)).total_seconds())
+                                except (ValueError, TypeError):
+                                    pass
+                        rate_retries += 1
+                        if retry > 60:
+                            retry = None
+                if retry is None:
+                    raise
+            finally:
+                event['elapsed_ms'] = round((time.monotonic() - started) * 1000, 2)
+            await self.sleep(retry)
+
+
+class ObservedOpenAI(RequestAttempts):
+    def __init__(self, client):
+        super().__init__()
+        self.client, self.responses = client, self
+
+    async def create(self, **kwargs):
+        return await self.request(self.client.responses.create, kwargs)
+
+
+class GeminiAdapter(RequestAttempts):
+    """Responses-shaped surface using Google's Chat Completions endpoint."""
+    def __init__(self, client, min_interval=12, max_retries=2, sleep=asyncio.sleep):
+        super().__init__(min_interval, max_retries, sleep)
+        self.client, self.responses = client, self
 
     async def create(self, *, model, instructions, input, tools, tool_choice=None, max_output_tokens=6000, **unused):
         request = {"model": model, "messages": chat_history(instructions, input),
@@ -64,33 +164,9 @@ class GeminiAdapter:
         if tool_choice is not None:
             request["tool_choice"] = ({"type": "function", "function": {"name": tool_choice["name"]}}
                                       if isinstance(tool_choice, dict) else tool_choice)
-        for attempt in range(self.max_retries + 1):
-            if self._last_attempt is not None:
-                delay = self.min_interval - (time.monotonic() - self._last_attempt)
-                if delay > 0:
-                    await self.sleep(delay)
-            self._last_attempt = time.monotonic()
-            try:
-                reply = await self.client.chat.completions.create(**request)
-                break
-            except RateLimitError as exc:
-                reason = str(exc).casefold()
-                exhausted = any(s in reason for s in ("daily", "per day", "per_day", "limit: 0", "limit 0", "insufficient_quota", "credit_balance_exhausted"))
-                if exhausted or attempt == self.max_retries:
-                    raise
-                retry_after = exc.response.headers.get("retry-after")
-                delay = min(2 ** (attempt + 1), 60)
-                if retry_after:
-                    try:
-                        delay = max(0, float(retry_after))
-                    except ValueError:
-                        try:
-                            delay = max(0, (parsedate_to_datetime(retry_after) - datetime.now(timezone.utc)).total_seconds())
-                        except (ValueError, TypeError):
-                            pass
-                if delay > 60:
-                    raise  # Do not stall a run on a long quota reset.
-                await self.sleep(delay)
+        reply = await self.request(self.client.chat.completions.create, request, chat=True)
+        if not reply.choices or (not reply.choices[0].message.tool_calls and not reply.choices[0].message.content):
+            self.events[-1].update(status='failed', failure_stage='response_validation', error_type='ValueError')
         if not reply.choices:
             raise ValueError("Gemini returned no choices; request may have been blocked")
         message = reply.choices[0].message
@@ -112,5 +188,8 @@ async def model_client(provider: str, key: str, min_interval: float = 12):
         raise ValueError("Unknown model provider")
     # Explicit endpoint prevents accidental use of OPENAI_BASE_URL for Gemini.
     endpoint = GEMINI_BASE_URL if provider == "gemini" else "https://api.openai.com/v1/"
-    async with AsyncOpenAI(api_key=key, base_url=endpoint, timeout=60, max_retries=0) as client:
-        yield GeminiAdapter(client, min_interval=min_interval) if provider == "gemini" else client
+    timeout = float(os.getenv('MODEL_REQUEST_TIMEOUT', '60'))
+    if timeout <= 0:
+        raise ValueError('MODEL_REQUEST_TIMEOUT must be positive')
+    async with AsyncOpenAI(api_key=key, base_url=endpoint, timeout=timeout, max_retries=0) as client:
+        yield GeminiAdapter(client, min_interval=min_interval) if provider == "gemini" else ObservedOpenAI(client)

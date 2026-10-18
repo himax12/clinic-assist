@@ -1,0 +1,34 @@
+{
+  "status": "failed",
+  "provider": "gemini",
+  "model": "gemini-3.8-flash",
+  "messages": 2,
+  "processed_ids": [
+    "M003"
+  ],
+  "unprocessed_ids": [
+    "M001"
+  ],
+  "tokens": {
+    "input_tokens": 0,
+    "output_tokens": 0
+  },
+  "estimated_cost_usd": null,
+  "cost_basis": "Rates not configured",
+  "errors": [
+    {
+      "id": "M003",
+      "error": "RateLimitError: Provider request failed; inspect request_events"
+    }
+  ],
+  "message_metrics": [
+    {
+      "id": "M003",
+      "elapsed_ms": 1641.0,
+      "model_calls": 1,
+      "unknown_usage_attempts": 1
+    }
+  ],
+  "usage_complete": false,
+  "state_model": "Shared sequential MCP server; fresh source data at process start"
+}

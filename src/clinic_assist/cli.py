@@ -40,6 +40,7 @@ async def run(args) -> int:
     tokens = {"input_tokens": 0, "output_tokens": 0}
     failures = []
     processed_ids = []
+    message_metrics = []
     write_json(args.output / "run.json", {"status": "running", "provider": args.provider, "model": args.model,
         "requested_ids": [m["id"] for m in messages], "unprocessed_ids": [m["id"] for m in messages]})
     params = StdioServerParameters(command=sys.executable,
@@ -59,8 +60,11 @@ async def run(args) -> int:
                             # Transport/preflight/recovery failures cannot honestly
                             # yield a successful handoff or complete MessageResult.
                             failures.append({"id": message["id"], "error": type(exc).__name__, "detail": "Processing interrupted; inspect partial trace"})
-                            trace_file.write(json.dumps({"message_id": message["id"], "error": type(exc).__name__, "trace": agent.trace}, ensure_ascii=False) + "\n")
+                            trace_file.write(json.dumps({"message_id": message["id"], "error": type(exc).__name__, "trace": agent.trace,
+                                "request_events": getattr(agent, "request_events", [])}, ensure_ascii=False) + "\n")
                             trace_file.flush()
+                            message_metrics.append({"id": message["id"], "interrupted": True,
+                                "unknown_usage_attempts": sum(not e["usage_known"] for e in getattr(agent, "request_events", []))})
                             for key in tokens:
                                 tokens[key] += agent.usage[key]
                             break
@@ -69,12 +73,13 @@ async def run(args) -> int:
                         result_file.flush()
                         trace_file.flush()
                         processed_ids.append(message["id"])
+                        message_metrics.append({"id": message["id"], **outcome.get("metrics", {})})
                         for key in tokens:
                             tokens[key] += outcome["usage"][key]
                         if outcome["error"]:
                             failures.append({"id": message["id"], "error": outcome["error"]})
                         print(message["id"] + (" -> human review (processing error)" if outcome["error"] else " -> processed"), file=sys.stderr)
-                        if outcome.get("provider_error_status") in {400, 401, 402, 403, 404, 422, 429}:
+                        if outcome.get("provider_unavailable") or outcome.get("provider_error_status") in {400, 401, 402, 403, 404, 422, 429}:
                             print("Provider access or quota unavailable; stopping remaining messages.", file=sys.stderr)
                             break
     input_rate, output_rate = os.getenv("INPUT_USD_PER_MILLION"), os.getenv("OUTPUT_USD_PER_MILLION")
@@ -84,7 +89,9 @@ async def run(args) -> int:
         "messages": len(messages), "processed_ids": processed_ids,
         "unprocessed_ids": [m["id"] for m in messages if m["id"] not in processed_ids], "tokens": tokens,
         "estimated_cost_usd": estimate, "cost_basis": "Configured standard rates; ignores cache discounts" if estimate is not None else "Rates not configured",
-        "errors": failures, "state_model": "Shared sequential MCP server; fresh source data at process start"})
+        "errors": failures, "message_metrics": message_metrics,
+        "usage_complete": not any(m.get("interrupted") or m.get("unknown_usage_attempts", 0) for m in message_metrics),
+        "state_model": "Shared sequential MCP server; fresh source data at process start"})
     print(str(args.output / "results.jsonl"))
     return 2 if failures else 0
 
@@ -129,7 +136,9 @@ def main() -> int:
                 "messages": len(messages), "labels": len(labels)}, indent=2))
         elif args.command == "evaluate":
             results = [MessageResult.model_validate_json(line).model_dump() for line in args.results.read_text(encoding="utf-8").splitlines() if line.strip()]
-            report = evaluate(read_json(args.labels), results, read_json(args.observations) if args.observations else None)
+            manifest = args.results.parent / "run.json"
+            report = evaluate(read_json(args.labels), results, read_json(args.observations) if args.observations else None,
+                run_manifest=read_json(manifest) if manifest.exists() else None)
             write_json(args.output, report)
             print(json.dumps(report, indent=2))
         else:

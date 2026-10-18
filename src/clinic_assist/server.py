@@ -5,7 +5,7 @@ from pathlib import Path
 from mcp.server.fastmcp import FastMCP
 
 from .clinic import Clinic
-from .contracts import Action, Intent, Queue, Urgency
+from .contracts import Action, Intent, Queue, ResponseLanguage, Urgency
 from .data import ClinicData
 
 
@@ -24,9 +24,9 @@ def create_server(data_path: Path) -> FastMCP:
         return clinic.data.clinic
 
     @server.tool()
-    def triage_message(urgency: Urgency, intents: list[Intent]) -> dict:
+    def triage_message(urgency: Urgency, intents: list[Intent], response_language: ResponseLanguage = "unspecified") -> dict:
         """First step: classify the entire message including buried clinical concerns. Emergency immediately alerts clinician_urgent and locks administrative actions."""
-        return clinic.triage(urgency, intents)
+        return clinic.triage(urgency, intents, response_language)
 
     @server.tool()
     def find_patient() -> dict:
@@ -83,6 +83,11 @@ def create_server(data_path: Path) -> FastMCP:
     def draft_reply(actions: list[Action], language: str = "English") -> dict:
         """Render an unsent reply from selected action enums, actual operation events and clinic policy. No free text accepted. Use English/Spanish. Emergency uses only the permitted safety template."""
         return clinic.draft_actions(actions, language)
+
+    @server.tool()
+    def finish_message(actions: list[Action]) -> dict:
+        """FINAL step: validate actions against actual operation evidence and render an unsent reply in the triaged response language. Completes this message immediately; no further model call is needed. Include all intents' actions. No free-form text."""
+        return clinic.finish_message(actions)
 
     @server.tool()
     def message_audit() -> dict:

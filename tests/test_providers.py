@@ -3,7 +3,7 @@ import json
 
 import httpx
 import pytest
-from openai import AsyncOpenAI, RateLimitError
+from openai import AsyncOpenAI, RateLimitError, APITimeoutError
 
 from clinic_assist.providers import GeminiAdapter
 
@@ -124,4 +124,70 @@ def test_multi_call_turn_is_replayed_once_with_both_tool_outputs():
             history.extend(x.model_dump() for x in reply.output)
             history.extend({"type":"function_call_output", "call_id":id, "output":"{}"} for id in ["one", "two"])
             await adapter.responses.create(model="test", instructions="p", input=history, tools=TOOLS)
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize('succeed', [True, False])
+def test_timeout_retries_once_with_observable_attempts(succeed):
+    calls, waits = [], []
+    def handle(request):
+        calls.append(json.loads(request.content))
+        if len(calls) == 1 or not succeed:
+            raise httpx.ReadTimeout('test timeout', request=request)
+        return httpx.Response(200, headers={'x-request-id':'audit-request'}, json=completion({'role':'assistant','content':'done'}))
+
+    async def sleep(delay):
+        waits.append(delay)
+
+    async def scenario():
+        async with AsyncOpenAI(api_key='test', http_client=httpx.AsyncClient(transport=httpx.MockTransport(handle)), max_retries=0) as client:
+            adapter = GeminiAdapter(client, min_interval=0, sleep=sleep)
+            if succeed:
+                result = await adapter.create(model='test', instructions='p', input=[], tools=[])
+                assert result.usage.input_tokens == 123
+            else:
+                with pytest.raises(APITimeoutError):
+                    await adapter.create(model='test', instructions='p', input=[], tools=[])
+            assert len(adapter.events) == 2
+            assert adapter.events[0]['error_type'] == 'APITimeoutError'
+            assert adapter.events[0]['failure_stage'] == 'transport'
+            assert adapter.events[1]['attempt'] == 2
+            if succeed:
+                assert adapter.events[1]['request_id'] == 'audit-request'
+                assert adapter.events[1]['input_tokens'] == 123
+    asyncio.run(scenario())
+    assert len(calls) == 2
+    assert calls[0] == calls[1]
+    assert waits == [2]
+
+
+def test_blocked_response_keeps_reported_usage_in_events():
+    async def scenario():
+        async with AsyncOpenAI(api_key='test', http_client=httpx.AsyncClient(transport=httpx.MockTransport(
+            lambda r: httpx.Response(200,json=completion({'role':'assistant','content':''},choices=[])))), max_retries=0) as client:
+            adapter = GeminiAdapter(client, min_interval=0)
+            with pytest.raises(ValueError):
+                await adapter.create(model='test',instructions='p',input=[],tools=[])
+            assert adapter.events[0]['input_tokens'] == 123
+            assert adapter.events[0]['failure_stage'] == 'response_validation'
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize('encoding', ['normal','nested','string'])
+def test_quota_diagnostics_keep_limits_but_not_raw_error_text(encoding):
+    async def scenario():
+        body={'error':{'code':429,'status':'RESOURCE_EXHAUSTED','message':'private message not to be recorded',
+            'details':[{'@type':'type.googleapis.com/google.rpc.QuotaFailure','violations':[
+                {'quotaMetric':'generate_content_free_tier_requests','quotaId':'GenerateRequestsPerDay','quotaValue':'20'}]}]}}
+        if encoding=='nested':
+            body={'error':{'message':json.dumps(body)}}
+        elif encoding=='string':
+            body={'error':json.dumps(body)}
+        async with AsyncOpenAI(api_key='test',max_retries=0,http_client=httpx.AsyncClient(transport=httpx.MockTransport(
+                lambda request:httpx.Response(429,json=body)))) as client:
+            adapter=GeminiAdapter(client,min_interval=0,max_retries=0)
+            with pytest.raises(RateLimitError):
+                await adapter.create(model='test',instructions='p',input=[],tools=[])
+            assert adapter.events[0]['quota_limits'][0]['quotaId']=='GenerateRequestsPerDay'
+            assert 'private message' not in json.dumps(adapter.events)
     asyncio.run(scenario())

@@ -1,0 +1,48 @@
+{
+  "status": "completed",
+  "provider": "gemini",
+  "model": "scripted-offline",
+  "messages": 4,
+  "processed_ids": [
+    "NEW-EMERGENCY",
+    "NEW-PRIVATE",
+    "NEW-MIXED",
+    "NEW-LEAVE"
+  ],
+  "unprocessed_ids": [],
+  "tokens": {
+    "input_tokens": 1200,
+    "output_tokens": 240
+  },
+  "estimated_cost_usd": null,
+  "cost_basis": "Rates not configured",
+  "errors": [],
+  "message_metrics": [
+    {
+      "id": "NEW-EMERGENCY",
+      "elapsed_ms": 94.0,
+      "model_calls": 1,
+      "unknown_usage_attempts": 0
+    },
+    {
+      "id": "NEW-PRIVATE",
+      "elapsed_ms": 63.0,
+      "model_calls": 3,
+      "unknown_usage_attempts": 0
+    },
+    {
+      "id": "NEW-MIXED",
+      "elapsed_ms": 93.0,
+      "model_calls": 4,
+      "unknown_usage_attempts": 0
+    },
+    {
+      "id": "NEW-LEAVE",
+      "elapsed_ms": 94.0,
+      "model_calls": 4,
+      "unknown_usage_attempts": 0
+    }
+  ],
+  "usage_complete": true,
+  "state_model": "Shared sequential MCP server; fresh source data at process start"
+}

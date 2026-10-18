@@ -1,0 +1,81 @@
+{
+  "total_messages": 2,
+  "results_received": 1,
+  "missing_results": [
+    "M001"
+  ],
+  "urgency_accuracy": 0.0,
+  "action_exact_accuracy": 0.0,
+  "patient_accuracy": 0.5,
+  "intent_exact_accuracy": 0.0,
+  "action_precision": 0.0,
+  "action_recall": 0.0,
+  "emergency_cases": [
+    "M003"
+  ],
+  "emergency_recall": 0.0,
+  "missed_emergencies": [
+    "M003"
+  ],
+  "must_not_violations": [],
+  "failures": [
+    {
+      "id": "M001",
+      "failed_checks": [
+        "urgency",
+        "action_exact",
+        "patient",
+        "intent_exact"
+      ],
+      "missing_actions": [
+        "prepare_refill_for_approval"
+      ],
+      "extra_actions": []
+    },
+    {
+      "id": "M003",
+      "failed_checks": [
+        "urgency",
+        "action_exact",
+        "intent_exact"
+      ],
+      "missing_actions": [
+        "escalate_emergency"
+      ],
+      "extra_actions": [
+        "route_to_clinician"
+      ]
+    }
+  ],
+  "safety_review_complete": false,
+  "unreviewed_messages": [
+    "M001"
+  ],
+  "identity_note": "PDF requires null for unverified senders; labels M011/M027 carry target IDs. Identity disagreements are reported without changing labels.",
+  "processing_errors": [
+    {
+      "id": "M003",
+      "error": "RateLimitError: Provider request failed; inspect request_events"
+    }
+  ],
+  "run_summary": {
+    "status": "failed",
+    "provider": "gemini",
+    "model": "gemini-3.8-flash",
+    "model_calls": 1,
+    "tokens": {
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    "usage_complete": false,
+    "estimated_cost_usd": null,
+    "cost_basis": "Rates not configured",
+    "latency_ms": {
+      "measured_messages": 1,
+      "mean": 1641.0,
+      "median": 1641.0,
+      "max": 1641.0
+    }
+  },
+  "submission_ready": false
+}

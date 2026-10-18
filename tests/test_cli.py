@@ -58,6 +58,8 @@ def test_transport_failure_preserves_explicit_failed_and_unprocessed_ids(tmp_pat
     assert manifest["status"] == "failed"
     assert manifest["errors"][0]["id"] == "M001"
     assert manifest["unprocessed_ids"] == ["M001", "M002"]
+    assert manifest["usage_complete"] is False
+    assert "request_events" in json.loads((output / "traces.jsonl").read_text())
     assert (output / "results.jsonl").read_text() == ""
 
 
@@ -72,7 +74,7 @@ def test_default_gemini_requires_its_own_key_even_if_openai_key_exists(tmp_path)
     assert not (tmp_path / "unused").exists()
 
 
-@pytest.mark.parametrize("status", [400, 402])
+@pytest.mark.parametrize("status", [400, 402, None])
 def test_gemini_access_failure_stops_before_second_message(tmp_path, status):
     from argparse import Namespace
     import asyncio
@@ -87,7 +89,7 @@ def test_gemini_access_failure_stops_before_second_message(tmp_path, status):
     async def failed_process(self, message):
         calls.append(message["id"])
         return {"result": {"id":message["id"]}, "trace":[], "audit":{}, "usage":{"input_tokens":0,"output_tokens":0},
-                "error":"Provider access failed", "provider_error_status":status}
+                "error":"Provider access failed", "provider_error_status":status, "provider_unavailable": status is None}
 
     async def scenario():
         with patch.dict(os.environ, {"GEMINI_API_KEY":"test-not-sent"}), patch("clinic_assist.agent.Agent.process", failed_process):

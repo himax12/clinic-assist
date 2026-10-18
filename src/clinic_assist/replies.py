@@ -43,7 +43,8 @@ def render_reply(actions: list[str], policy: dict, audit: dict, language: str) -
                          + ("almuerzo " if es else "lunch ") + "-".join(h["lunch"]) + ". "
                          + ("Cerrado en estas fechas: " if es else "Closed on these holidays: ") + ", ".join(policy["holidays"]) + ".")
         elif action in {"offer_appointment", "offer_alternatives"}:
-            slots = [s for e in audit["events"] if e["kind"] == "slot_search" for s in e["slots"]]
+            searches = [e for e in audit["events"] if e["kind"] == "slot_search"]
+            slots = searches[-1]["slots"] if searches else []
             if slots:
                 parts.append(("Opciones disponibles, sujetas a confirmación: " if es else "Available options, subject to confirmation: ")
                     + "; ".join(f"{s['date']} {s['start']}-{s['end']} ({s['provider']})" for s in slots[:3]) + ".")

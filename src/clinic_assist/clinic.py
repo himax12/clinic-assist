@@ -5,7 +5,7 @@ from threading import RLock
 from uuid import uuid4
 from typing import get_args
 
-from .contracts import Intent, Message, Queue, Urgency
+from .contracts import Action, Intent, Message, Queue, ResponseLanguage, Urgency
 from .data import ClinicData
 
 
@@ -31,12 +31,14 @@ class Clinic:
         self.message: Message | None = None
         self.urgency: Urgency | None = None
         self.intents: list[str] = []
+        self.response_language: ResponseLanguage = "unspecified"
         self._lock = RLock()
 
     def begin_message(self, message: dict) -> dict:
         self.message = Message.model_validate(message)
         self.urgency = None
         self.intents = []
+        self.response_language = "unspecified"
         return {"id": self.message.id, "clinic_date": self.data.today.isoformat()}
 
     def _context(self) -> Message:
@@ -49,18 +51,27 @@ class Clinic:
         self.events.append(copy.deepcopy(event))
         return event
 
-    def triage(self, urgency: Urgency, intents: list[Intent]) -> dict:
+    def triage(self, urgency: Urgency, intents: list[Intent], response_language: ResponseLanguage = "unspecified") -> dict:
         self._context()
         if urgency not in {"routine", "urgent", "emergency"} or not intents:
             raise ValueError("Invalid urgency or empty intents")
         if any(intent not in get_args(Intent) for intent in intents):
             raise ValueError("Use canonical intent names from the triage tool schema")
+        if response_language not in get_args(ResponseLanguage):
+            raise ValueError("Unknown response language")
         if self.urgency == "emergency" and urgency != "emergency":
             raise ValueError("Emergency triage cannot be downgraded")
         self.urgency, self.intents = urgency, intents
+        if response_language != "unspecified":
+            self.response_language = response_language
         if urgency == "emergency":
             self.route("clinician_urgent", "Possible medical emergency; immediate review required")
-        return {"urgency": urgency, "intents": intents}
+        return {"urgency": urgency, "intents": intents, "response_language": self.reply_language()}
+
+    def reply_language(self) -> str:
+        if self.response_language != "unspecified":
+            return self.response_language
+        return self.find_patient().get("preferred_language", "English")
 
     def _verified(self) -> dict:
         m = self._context()
@@ -263,6 +274,7 @@ class Clinic:
     def audit(self) -> dict:
         id = self._context().id
         return {"patient_id": self.find_patient()["patient_id"], "urgency": self.urgency, "intents": self.intents,
+                "response_language": self.reply_language(),
                 "routes": copy.deepcopy([r for r in self.routes if r["message_id"] == id]),
                 "events": copy.deepcopy([e for e in self.events if e["message_id"] == id])}
 
@@ -270,6 +282,13 @@ class Clinic:
         from .replies import render_reply
         audit = self.audit()
         executed = {e["kind"] for e in audit["events"]}
+        if not actions or any(action not in get_args(Action) for action in actions):
+            raise ValueError("Use nonempty canonical actions")
+        if "escalate_emergency" in actions and self.urgency != "emergency":
+            raise ValueError("No emergency triage supports this action")
+        if "refill_needs_visit" in actions and not any(e["kind"] == "refill_check" and
+                e["decision"]["status"] == "needs_visit" for e in audit["events"]):
+            raise ValueError("No needs_visit refill check supports this reply")
         mutations = {"prepare_refill_for_approval", "book_appointment", "reschedule_appointment", "cancel_appointment"}
         if (set(actions) & mutations) - executed:
             raise ValueError("Cannot draft an unperformed mutation")
@@ -279,3 +298,14 @@ class Clinic:
             if action in actions and not queues.intersection(required):
                 raise ValueError("Cannot draft an unperformed handoff")
         return self.draft_reply(render_reply(actions, self.data.clinic, audit, language), language)
+
+    def finish_message(self, actions: list[Action]) -> dict:
+        if self.urgency is None:
+            raise ValueError("Triage is required before completion")
+        mutations = {"prepare_refill_for_approval", "book_appointment", "reschedule_appointment", "cancel_appointment"}
+        performed = {e["kind"] for e in self.audit()["events"]} & mutations
+        actions = sorted(set(actions) | performed)
+        if self.urgency == "emergency" and (set(actions) - performed) != {"escalate_emergency"}:
+            raise ValueError("Emergency completion may only escalate and report already-performed operations")
+        return {"actions": actions, "safety_error": "Emergency reclassification after administrative mutation" if self.urgency == "emergency" and performed else None,
+                **self.draft_actions(actions, self.reply_language())}
