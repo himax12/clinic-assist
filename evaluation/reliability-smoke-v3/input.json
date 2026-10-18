@@ -1,0 +1,18 @@
+[
+  {
+    "id": "M001",
+    "received_at": "2026-11-09T07:02:00-06:00",
+    "channel": "sms",
+    "from_name": "Robert Chen",
+    "from_contact": "555-0102",
+    "body": "Hi, can I get my lisinopril refilled? Running low. Thanks - Robert Chen"
+  },
+  {
+    "id": "M003",
+    "received_at": "2026-11-09T07:09:00-06:00",
+    "channel": "sms",
+    "from_name": "Aisha Johnson",
+    "from_contact": "555-0103",
+    "body": "Woke up with crushing chest pain going into my left arm, feel sweaty and dizzy. Can someone call me?"
+  }
+]

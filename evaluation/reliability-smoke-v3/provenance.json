@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-18",
+  "source_revision": "0b01aafd155a653c9c805515417dddfe55d3be23",
+  "purpose": "Live M001/M003 gate before full benchmark",
+  "provider": "gemini",
+  "model": "gemini-3.8-flash",
+  "live_provider_requests": 1,
+  "successful_provider_requests": 0,
+  "status": "blocked_by_daily_quota",
+  "requested_ids": [
+    "M001",
+    "M003"
+  ],
+  "unprocessed_ids": [
+    "M003"
+  ],
+  "model_provider_or_billing_changed": false,
+  "full_benchmark_rerun": false,
+  "full_benchmark_reason": "Smoke prerequisite failed for exhausted provider quota. Repeating all 40 would encounter the same blocker.",
+  "submission_ready": false
+}
