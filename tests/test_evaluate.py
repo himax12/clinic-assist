@@ -70,3 +70,13 @@ def test_missing_mixed_intent_result_is_not_falsely_called_refill_only():
     assert evaluate([mixed],[])['must_not_violations']==[]
     unsafe=prediction(intents=['refill','clinical'],actions=['prepare_refill_for_approval'])
     assert evaluate([mixed],[unsafe])['must_not_violations']==[{'id':'X1','behaviors':['refill_only']}]
+
+
+def test_evaluator_preserves_model_fallback_provenance():
+    manifest={'status':'completed','provider':'gemini','model':'gemini-primary',
+        'fallback_models':['gemini-backup'],'models_attempted':['gemini-primary','gemini-backup'],
+        'models_used':['gemini-backup'],'errors':[],'message_metrics':[]}
+    report=evaluate([label()],[prediction()],run_manifest=manifest)
+    assert report['run_summary']['model']=='gemini-primary'
+    assert report['run_summary']['models_used']==['gemini-backup']
+    assert report['run_summary']['fallback_models']==['gemini-backup']

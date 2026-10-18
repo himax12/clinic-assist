@@ -55,7 +55,7 @@ class RequestAttempts:
         self.events = []
 
     async def request(self, method, request, chat=False):
-        rate_retries = transport_retries = 0
+        rate_retries = transport_retries = server_retries = 0
         attempt = 0
         while True:
             if self._last_attempt is not None:
@@ -117,6 +117,9 @@ class RequestAttempts:
                 if isinstance(exc, APIConnectionError) and transport_retries < 1:
                     transport_retries += 1
                     retry = 2
+                elif event['http_status'] in {500, 502, 503, 504} and server_retries < 1:
+                    server_retries += 1
+                    retry = 2
                 elif isinstance(exc, RateLimitError) and rate_retries < self.max_retries:
                     if not exhausted:
                         retry = retry_hint if retry_hint is not None else 2 ** (rate_retries + 1)
@@ -150,12 +153,41 @@ class ObservedOpenAI(RequestAttempts):
 
 class GeminiAdapter(RequestAttempts):
     """Responses-shaped surface using Google's Chat Completions endpoint."""
-    def __init__(self, client, min_interval=12, max_retries=2, sleep=asyncio.sleep):
+    def __init__(self, client, min_interval=12, max_retries=2, sleep=asyncio.sleep, fallback_models=()):
         super().__init__(min_interval, max_retries, sleep)
         self.client, self.responses = client, self
+        self.fallback_models = list(dict.fromkeys(fallback_models))
+        if len(self.fallback_models) > 3 or any(not name.startswith('gemini-') for name in self.fallback_models):
+            raise ValueError('Configure at most three Gemini fallback models')
+        self.selected_model = None
+
+    async def _request_with_fallback(self, request, *, initial):
+        candidates = list(dict.fromkeys([request['model'], *self.fallback_models])) if initial else [request['model']]
+        previous = reason = None
+        for index, model in enumerate(candidates):
+            self.selected_model = model
+            cursor = len(self.events)
+            try:
+                return await self.request(self.client.chat.completions.create, request | {'model': model}, chat=True)
+            except Exception as exc:
+                status = getattr(exc, 'status_code', None)
+                eligible = isinstance(exc, APIConnectionError) or status in {404, 429, 500, 502, 503, 504}
+                if not eligible or index == len(candidates) - 1:
+                    raise
+                next_reason = 'transport' if isinstance(exc, APIConnectionError) else f'http_{status}'
+            finally:
+                if previous is not None:
+                    for event in self.events[cursor:]:
+                        event.update(fallback_from=previous, fallback_reason=reason)
+            previous, reason = model, next_reason
 
     async def create(self, *, model, instructions, input, tools, tool_choice=None, max_output_tokens=6000, **unused):
-        request = {"model": model, "messages": chat_history(instructions, input),
+        # Never migrate a successful assistant/tool turn or its thought signatures
+        # to another model. A new message starts with fresh user-only history.
+        initial = not any(item.get('type') == 'function_call' or item.get('role') == 'assistant' for item in input)
+        if initial:
+            self.selected_model = model
+        request = {"model": self.selected_model or model, "messages": chat_history(instructions, input),
                    "max_tokens": max_output_tokens}
         if tools:
             request["tools"] = [{"type": "function", "function": {
@@ -164,7 +196,7 @@ class GeminiAdapter(RequestAttempts):
         if tool_choice is not None:
             request["tool_choice"] = ({"type": "function", "function": {"name": tool_choice["name"]}}
                                       if isinstance(tool_choice, dict) else tool_choice)
-        reply = await self.request(self.client.chat.completions.create, request, chat=True)
+        reply = await self._request_with_fallback(request, initial=initial)
         if not reply.choices or (not reply.choices[0].message.tool_calls and not reply.choices[0].message.content):
             self.events[-1].update(status='failed', failure_stage='response_validation', error_type='ValueError')
         if not reply.choices:
@@ -192,4 +224,5 @@ async def model_client(provider: str, key: str, min_interval: float = 12):
     if timeout <= 0:
         raise ValueError('MODEL_REQUEST_TIMEOUT must be positive')
     async with AsyncOpenAI(api_key=key, base_url=endpoint, timeout=timeout, max_retries=0) as client:
-        yield GeminiAdapter(client, min_interval=min_interval) if provider == "gemini" else ObservedOpenAI(client)
+        fallbacks = [name.strip() for name in os.getenv('GEMINI_FALLBACK_MODELS', '').split(',') if name.strip()]
+        yield GeminiAdapter(client, min_interval=min_interval, fallback_models=fallbacks) if provider == "gemini" else ObservedOpenAI(client)

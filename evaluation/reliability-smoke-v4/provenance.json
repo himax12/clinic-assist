@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-18",
+  "purpose": "First live configured model fallback attempt, before same-model server retry fix",
+  "status": "partial_operations_retained_after_503",
+  "live_provider_requests": 7,
+  "successful_provider_requests": 5,
+  "configured_fallback_models": [
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite"
+  ],
+  "model_used": "gemini-2.5-flash",
+  "source_state": "Uncommitted fallback implementation; before bounded transient-server retry change",
+  "submission_ready": false
+}

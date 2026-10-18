@@ -191,3 +191,148 @@ def test_quota_diagnostics_keep_limits_but_not_raw_error_text(encoding):
             assert adapter.events[0]['quota_limits'][0]['quotaId']=='GenerateRequestsPerDay'
             assert 'private message' not in json.dumps(adapter.events)
     asyncio.run(scenario())
+
+@pytest.mark.parametrize('status', [429, 503, 404])
+def test_initial_request_falls_back_and_records_actual_model(status):
+    requests=[]
+    def handle(request):
+        body=json.loads(request.content)
+        requests.append(body)
+        if body['model']=='gemini-primary':
+            return httpx.Response(status,json={'error':{'message':'Daily quota exhausted' if status==429 else 'Model unavailable'}})
+        return httpx.Response(200,json=completion({'role':'assistant','content':'done'}))
+    async def scenario():
+        async with AsyncOpenAI(api_key='test',max_retries=0,http_client=httpx.AsyncClient(transport=httpx.MockTransport(handle))) as client:
+            adapter=GeminiAdapter(client,min_interval=0,max_retries=0,fallback_models=['gemini-backup'])
+            reply=await adapter.create(model='gemini-primary',instructions='p',input=[{'role':'user','content':'synthetic'}],tools=[])
+            assert reply.output_text=='done'
+            assert adapter.selected_model=='gemini-backup'
+            assert [e['model'] for e in adapter.events]==(['gemini-primary'] * (2 if status==503 else 1))+['gemini-backup']
+            assert adapter.events[-1]['fallback_from']=='gemini-primary'
+            assert adapter.events[-1]['fallback_reason']==f'http_{status}'
+    asyncio.run(scenario())
+    assert [r['model'] for r in requests]==(['gemini-primary'] * (2 if status==503 else 1))+['gemini-backup']
+    assert requests[0]['messages']==requests[1]['messages']
+
+
+@pytest.mark.parametrize('status',[400,401,403])
+def test_fallback_never_masks_authentication_permission_or_invalid_requests(status):
+    from openai import APIStatusError
+    requests=[]
+    def handle(request):
+        requests.append(request)
+        return httpx.Response(status,json={'error':{'message':'rejected'}})
+    async def scenario():
+        async with AsyncOpenAI(api_key='test',max_retries=0,http_client=httpx.AsyncClient(transport=httpx.MockTransport(handle))) as client:
+            adapter=GeminiAdapter(client,min_interval=0,fallback_models=['gemini-backup'])
+            with pytest.raises(APIStatusError):
+                await adapter.create(model='gemini-primary',instructions='p',input=[],tools=[])
+            assert len(adapter.events)==1
+    asyncio.run(scenario())
+    assert len(requests)==1
+
+
+def test_fallback_is_bounded_and_skips_duplicate_model_names():
+    requests=[]
+    def handle(request):
+        requests.append(json.loads(request.content)['model'])
+        return httpx.Response(429,json={'error':{'message':'Daily quota exhausted'}})
+    async def scenario():
+        async with AsyncOpenAI(api_key='test',max_retries=0,http_client=httpx.AsyncClient(transport=httpx.MockTransport(handle))) as client:
+            adapter=GeminiAdapter(client,min_interval=0,fallback_models=['gemini-primary','gemini-backup','gemini-backup'])
+            with pytest.raises(RateLimitError):
+                await adapter.create(model='gemini-primary',instructions='p',input=[],tools=[])
+    asyncio.run(scenario())
+    assert requests==['gemini-primary','gemini-backup']
+
+
+def test_selected_model_is_pinned_for_tool_history_then_reset_for_next_message():
+    requests=[]
+    def handle(request):
+        body=json.loads(request.content)
+        requests.append(body)
+        if len(requests)==1 or len(requests)==3:
+            return httpx.Response(429,json={'error':{'message':'Daily quota exhausted'}})
+        return httpx.Response(200,json=completion({'role':'assistant','content':None,'tool_calls':[
+            {'id':'c1','type':'function','function':{'name':'triage_message','arguments':'{}'}}]}))
+    async def scenario():
+        async with AsyncOpenAI(api_key='test',max_retries=0,http_client=httpx.AsyncClient(transport=httpx.MockTransport(handle))) as client:
+            adapter=GeminiAdapter(client,min_interval=0,fallback_models=['gemini-backup','gemini-third'])
+            first=[{'role':'user','content':'one'}]
+            reply=await adapter.create(model='gemini-primary',instructions='p',input=first,tools=TOOLS)
+            first.extend(item.model_dump() for item in reply.output)
+            first.append({'type':'function_call_output','call_id':'c1','output':'{}'})
+            with pytest.raises(RateLimitError):
+                await adapter.create(model='gemini-primary',instructions='p',input=first,tools=TOOLS)
+            await adapter.create(model='gemini-primary',instructions='p',input=[{'role':'user','content':'two'}],tools=TOOLS)
+    asyncio.run(scenario())
+    assert [r['model'] for r in requests]==['gemini-primary','gemini-backup','gemini-backup','gemini-primary']
+
+
+def test_initial_transport_failure_retries_then_falls_back():
+    requests=[]
+    async def sleep(delay):
+        pass
+    def handle(request):
+        body=json.loads(request.content)
+        requests.append(body['model'])
+        if body['model']=='gemini-primary':
+            raise httpx.ConnectError('controlled connection failure',request=request)
+        return httpx.Response(200,json=completion({'role':'assistant','content':'done'}))
+    async def scenario():
+        async with AsyncOpenAI(api_key='test',max_retries=0,http_client=httpx.AsyncClient(transport=httpx.MockTransport(handle))) as client:
+            adapter=GeminiAdapter(client,min_interval=0,sleep=sleep,fallback_models=['gemini-backup'])
+            await adapter.create(model='gemini-primary',instructions='p',input=[],tools=[])
+            assert adapter.events[-1]['fallback_reason']=='transport'
+    asyncio.run(scenario())
+    assert requests==['gemini-primary','gemini-primary','gemini-backup']
+
+
+def test_unusable_response_does_not_trigger_model_fallback():
+    requests=[]
+    def handle(request):
+        requests.append(request)
+        return httpx.Response(200,json=completion({'role':'assistant','content':''},choices=[]))
+    async def scenario():
+        async with AsyncOpenAI(api_key='test',max_retries=0,http_client=httpx.AsyncClient(transport=httpx.MockTransport(handle))) as client:
+            adapter=GeminiAdapter(client,min_interval=0,fallback_models=['gemini-backup'])
+            with pytest.raises(ValueError,match='no choices'):
+                await adapter.create(model='gemini-primary',instructions='p',input=[],tools=[])
+    asyncio.run(scenario())
+    assert len(requests)==1
+
+
+@pytest.mark.parametrize('fallbacks', [['other-provider'], ['gemini-a','gemini-b','gemini-c','gemini-d']])
+def test_fallback_configuration_rejects_other_providers_or_unbounded_lists(fallbacks):
+    with pytest.raises(ValueError,match='at most three Gemini'):
+        GeminiAdapter(None,fallback_models=fallbacks)
+
+
+@pytest.mark.parametrize('setting,expected',[('gemini-backup, gemini-third',['gemini-backup','gemini-third']),('',[])])
+def test_model_client_reads_fallback_configuration_without_changing_provider(monkeypatch,setting,expected):
+    from clinic_assist.providers import model_client
+    monkeypatch.setenv('GEMINI_FALLBACK_MODELS',setting)
+    async def scenario():
+        async with model_client('gemini','offline-test',min_interval=0) as adapter:
+            assert adapter.fallback_models==expected
+            assert adapter.client.base_url.host=='generativelanguage.googleapis.com'
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize('recover',[True,False])
+def test_transient_server_error_retries_same_model_once_before_fallback(recover):
+    calls=[]
+    async def sleep(delay):
+        pass
+    def handle(request):
+        model=json.loads(request.content)['model']
+        calls.append(model)
+        if model=='gemini-primary' and (not recover or len(calls)==1):
+            return httpx.Response(503,json={'error':{'message':'Temporary unavailable'}})
+        return httpx.Response(200,json=completion({'role':'assistant','content':'done'}))
+    async def scenario():
+        async with AsyncOpenAI(api_key='test',max_retries=0,http_client=httpx.AsyncClient(transport=httpx.MockTransport(handle))) as client:
+            adapter=GeminiAdapter(client,min_interval=0,sleep=sleep,fallback_models=['gemini-backup'])
+            await adapter.create(model='gemini-primary',instructions='p',input=[],tools=[])
+    asyncio.run(scenario())
+    assert calls==(['gemini-primary','gemini-primary'] if recover else ['gemini-primary','gemini-primary','gemini-backup'])

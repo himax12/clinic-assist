@@ -41,6 +41,7 @@ async def run(args) -> int:
     failures = []
     processed_ids = []
     message_metrics = []
+    models_attempted, models_used = [], []
     write_json(args.output / "run.json", {"status": "running", "provider": args.provider, "model": args.model,
         "requested_ids": [m["id"] for m in messages], "unprocessed_ids": [m["id"] for m in messages]})
     params = StdioServerParameters(command=sys.executable,
@@ -63,7 +64,14 @@ async def run(args) -> int:
                             trace_file.write(json.dumps({"message_id": message["id"], "error": type(exc).__name__, "trace": agent.trace,
                                 "request_events": getattr(agent, "request_events", [])}, ensure_ascii=False) + "\n")
                             trace_file.flush()
+                            events = getattr(agent, 'request_events', [])
+                            for event in events:
+                                if event['model'] not in models_attempted:
+                                    models_attempted.append(event['model'])
+                                if event['status'] == 'completed' and event['model'] not in models_used:
+                                    models_used.append(event['model'])
                             message_metrics.append({"id": message["id"], "interrupted": True,
+                                "model": getattr(client, 'selected_model', None) or args.model,
                                 "unknown_usage_attempts": sum(not e["usage_known"] for e in getattr(agent, "request_events", []))})
                             for key in tokens:
                                 tokens[key] += agent.usage[key]
@@ -73,7 +81,12 @@ async def run(args) -> int:
                         result_file.flush()
                         trace_file.flush()
                         processed_ids.append(message["id"])
-                        message_metrics.append({"id": message["id"], **outcome.get("metrics", {})})
+                        message_metrics.append({"id": message["id"], "model": outcome.get('model', args.model), **outcome.get("metrics", {})})
+                        for event in outcome.get('request_events', []):
+                            if event['model'] not in models_attempted:
+                                models_attempted.append(event['model'])
+                            if event['status'] == 'completed' and event['model'] not in models_used:
+                                models_used.append(event['model'])
                         for key in tokens:
                             tokens[key] += outcome["usage"][key]
                         if outcome["error"]:
@@ -85,10 +98,16 @@ async def run(args) -> int:
     input_rate, output_rate = os.getenv("INPUT_USD_PER_MILLION"), os.getenv("OUTPUT_USD_PER_MILLION")
     estimate = ((tokens["input_tokens"] * float(input_rate) + tokens["output_tokens"] * float(output_rate)) / 1_000_000
                 if input_rate and output_rate else None)
+    fallback_attempted = any(model != args.model for model in models_attempted)
+    cost_basis = "Configured standard rates; ignores cache discounts" if estimate is not None else "Rates not configured"
+    if fallback_attempted:
+        estimate, cost_basis = None, 'Model fallback attempted; per-model pricing not configured'
     write_json(args.output / "run.json", {"status": "failed" if failures else "completed", "provider": args.provider, "model": args.model,
+        "fallback_models": getattr(client, 'fallback_models', []),
+        "models_attempted": models_attempted, "models_used": models_used,
         "messages": len(messages), "processed_ids": processed_ids,
         "unprocessed_ids": [m["id"] for m in messages if m["id"] not in processed_ids], "tokens": tokens,
-        "estimated_cost_usd": estimate, "cost_basis": "Configured standard rates; ignores cache discounts" if estimate is not None else "Rates not configured",
+        "estimated_cost_usd": estimate, "cost_basis": cost_basis,
         "errors": failures, "message_metrics": message_metrics,
         "usage_complete": not any(m.get("interrupted") or m.get("unknown_usage_attempts", 0) for m in message_metrics),
         "state_model": "Shared sequential MCP server; fresh source data at process start"})

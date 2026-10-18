@@ -15,6 +15,15 @@
   "cost": "Unknown: rates not configured and rejected request usage not supplied.",
   "identity_conflicts": "PDF privacy invariant takes precedence over target IDs in labels M011/M027.",
   "scorer_note": "Missing results count as failures and missed emergencies; they are not invented observed refill-only actions.",
-  "latest_live_smoke": "reliability-smoke-v3/provenance.json",
-  "latest_live_status": "First Gemini request HTTP 429 daily quota; M001 fallback reviewed, M003 unprocessed. Full benchmark rerun awaits restored quota."
+  "latest_live_smoke": "reliability-smoke-v5/provenance.json",
+  "latest_live_status": "M001 extra route_to_provider action; M003 correct. Both processing outcomes had no error.",
+  "fallback_validation": {
+    "date": "2026-10-18",
+    "offline_tests": 111,
+    "command": "uv run pytest -q --tb=short",
+    "elapsed_seconds": 26.68,
+    "source_code_sha256": "06f98a412f215a7fce3343e539d4463fb2c85592e3072db6e990fd60c400f423",
+    "review": "Independent read-only review; interruption provenance issue fixed and re-reviewed; no remaining Important/Critical findings.",
+    "policy": "Configured Gemini alternatives only before first successful response; same model pinned thereafter. Authentication failures never trigger fallback. Transient server requests retry once without replaying tools."
+  }
 }

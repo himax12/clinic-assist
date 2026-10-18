@@ -73,6 +73,8 @@ def evaluate(labels: list[dict], results: list[dict],
         errors = run_manifest.get('errors', [])
         report.update(processing_errors=errors, run_summary={
             'status':run_manifest.get('status'), 'provider':run_manifest.get('provider'), 'model':run_manifest.get('model'),
+            'fallback_models':run_manifest.get('fallback_models', []),
+            'models_attempted':run_manifest.get('models_attempted', []), 'models_used':run_manifest.get('models_used', []),
             'model_calls':sum(item.get('model_calls',0) for item in metrics),
             'tokens':run_manifest.get('tokens'), 'usage_complete':run_manifest.get('usage_complete',False),
             'estimated_cost_usd':run_manifest.get('estimated_cost_usd'), 'cost_basis':run_manifest.get('cost_basis'),

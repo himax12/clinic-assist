@@ -19,10 +19,10 @@ uv run clinic-assist
 
 Browsing works without a key. Processing requires available Gemini quota. Keep `.env` local.
 
-- `/inbox` — list samples; `/open M001` — read one.
-- `/run M001` — process a sample, or type your own message and supply sender details.
-- `/last` — view the reply; `/trace` — inspect tool calls; `/status` — view session details.
-- `/sender` — change sender details; `/help` — all commands; `/quit` — exit.
+- `/inbox` â€” list samples; `/open M001` â€” read one.
+- `/run M001` â€” process a sample, or type your own message and supply sender details.
+- `/last` â€” view the reply; `/trace` â€” inspect tool calls; `/status` â€” view session details.
+- `/sender` â€” change sender details; `/help` â€” all commands; `/quit` â€” exit.
 
 **Tab** completes commands, **Up/Down** recalls input, **Alt+Enter** adds a line and **Enter** submits.
 
@@ -51,7 +51,7 @@ flowchart LR
 
 The model proposes tools; Python enforces permissions and policies. `agent.py` orchestrates, `providers.py` adapts Gemini, `server.py` exposes MCP tools, `clinic.py` owns operations, `replies.py` renders English/Spanish drafts and `evaluate.py` scores saved results. Labels stay outside inference.
 
-Gemini uses the OpenAI SDK pointed at Google's endpoint. OpenAI is an explicit alternate via `--provider openai`; there is no automatic provider or model fallback.
+Gemini uses the OpenAI SDK pointed at Google's endpoint. OpenAI is an explicit alternate via `--provider openai`; providers never switch automatically. Gemini can use the configured model fallback chain below.
 
 ## Message workflow
 
@@ -87,11 +87,11 @@ Emergency classification also applies on later triage calls. If a mutation alrea
 
 ## Validation status
 
-**89 offline tests passed. Live Gemini acceptance remains blocked by HTTP 429 daily quota exhaustion.**
+**111 offline tests pass. Live acceptance and the complete 40-case evaluation remain unfinished.**
 
-The 40-case benchmark stopped at its first model request: M001 received a human-review fallback and 39 messages were unprocessed. All five labelled emergencies remain missing. **Submission readiness is false; live model performance and cost are unknown.**
+The retained initial 40-case benchmark stopped at its first model request: M001 received a human-review fallback and 39 messages were unprocessed. All five labelled emergencies remain missing. **Submission readiness is false; live model performance and cost are unknown.**
 
-See the [benchmark report](evaluation/benchmark-v1/evaluation.json), [run metadata](evaluation/benchmark-v1/run.json), [traces](evaluation/benchmark-v1/traces.jsonl) and [evidence provenance](evaluation/provenance.json). Failed smoke runs are preserved in `evaluation/reliability-smoke-v1`, `evaluation/reliability-smoke-v2` and [the latest live retry](evaluation/reliability-smoke-v3/provenance.json). The latest retry again received HTTP 429 on the first model request; its fallback reply and trace were explicitly reviewed, and M003 remained unprocessed. A [four-case scripted rehearsal](evaluation/offline-rehearsal-v1/provenance.json) checks actual CLI/MCP execution, not live model accuracy.
+See the [benchmark report](evaluation/benchmark-v1/evaluation.json), [run metadata](evaluation/benchmark-v1/run.json), [traces](evaluation/benchmark-v1/traces.jsonl) and [evidence provenance](evaluation/provenance.json). Failed smoke runs are preserved in `evaluation/reliability-smoke-v1`, `evaluation/reliability-smoke-v2` and [the latest live retry](evaluation/reliability-smoke-v3/provenance.json). That retry received HTTP 429 on the first model request. A [later live fallback attempt](evaluation/reliability-smoke-v4/provenance.json) reached Gemini 2.5 Flash and prepared a refill before a later HTTP 503 caused a safe handoff. Both partial replies/traces were explicitly reviewed; neither attempt completed the live gate. A [four-case scripted rehearsal](evaluation/offline-rehearsal-v1/provenance.json) checks actual CLI/MCP execution, not live model accuracy.
 
 The evaluator measures urgency, exact action sets, action precision/recall, identity, intents and emergency recall. Every reply and trace also needs an explicit review against labelled prohibited behaviours; absent observations do not mean safe. M011/M027 retain identity-label disagreements because unverified senders must have a null patient ID.
 
@@ -115,7 +115,11 @@ Run the standalone MCP server with `uv run python -m clinic_assist.server --data
 
 ## Configuration
 
-See [.env.example](.env.example) for provider, model and optional pricing settings. Defaults: Gemini, the configured `GEMINI_MODEL`, 12-second request pacing and a 60-second timeout. Timeout/connection failures retry a model request once without replaying completed MCP operations. Quota retries are bounded; unknown usage and cost stay explicit.
+See [.env.example](.env.example) for provider, model and optional pricing settings. Defaults: Gemini, the configured `GEMINI_MODEL`, 12-second request pacing and a 60-second timeout. Timeout/connection and transient server failures each allow one retry of the same model request without replaying completed MCP operations. Quota retries are bounded; unknown usage and cost stay explicit.
+
+`GEMINI_FALLBACK_MODELS=gemini-2.5-flash,gemini-2.5-flash-lite` enables an ordered fallback chain (maximum three alternatives). Leave it empty to disable fallback. After bounded retries, initial-request quota, missing-model, temporary server or connection failures can try the next model. Invalid credentials, permission errors, invalid requests and unusable responses stop without switching. Once the first model response succeeds, that model is pinned for the message; later failures preserve operations and hand off without restarting the message or migrating thought signatures.
+
+Traces record every attempted model and fallback reason. Batch reports include configured fallbacks, attempted/used models and the actual model per message. Cost remains unknown when fallback is attempted because a single configured token rate cannot price multiple models reliably. For a fixed-model benchmark, set `$env:GEMINI_FALLBACK_MODELS = ""` before running. A valid Gemini key is required for every model in the chain.
 
 ## Built with and next steps
 

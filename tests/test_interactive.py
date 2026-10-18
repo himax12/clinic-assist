@@ -240,3 +240,18 @@ def test_interrupted_processing_preserves_trace_and_disables_the_connection(tmp_
         with pytest.raises(RuntimeError, match='Restart'):
             await backend.connect()
     asyncio.run(scenario())
+
+
+def test_interrupted_interactive_run_retains_fallback_request_history(tmp_path):
+    from clinic_assist.interactive import RunStore
+    import json
+    store=RunStore(tmp_path/'interrupted-fallback','gemini','gemini-primary')
+    events=[{'model':'gemini-primary','status':'failed','http_status':429},
+            {'model':'gemini-backup','status':'completed','input_tokens':100,'output_tokens':20}]
+    store.interrupted('NEW',[],{'input_tokens':100,'output_tokens':20},'CancelledError',request_events=events)
+    manifest=json.loads((store.path/'run.json').read_text())
+    trace=json.loads((store.path/'traces.jsonl').read_text())
+    assert trace['request_events']==events
+    assert manifest['models_attempted']==['gemini-primary','gemini-backup']
+    assert manifest['models_used']==['gemini-backup']
+    assert manifest['unprocessed_ids']==['NEW']

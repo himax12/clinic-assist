@@ -138,4 +138,7 @@ class Agent:
                 "provider_unavailable": self.provider_unavailable, "request_events": self.request_events,
                 "metrics": {"elapsed_ms": round((time.monotonic()-self.started_at)*1000,2),
                     "model_calls": len(self.request_events),
-                    "unknown_usage_attempts": sum(not e["usage_known"] for e in self.request_events)}, "model": self.model}
+                    "models_attempted": list(dict.fromkeys(e['model'] for e in self.request_events)),
+                    "unknown_usage_attempts": sum(not e["usage_known"] for e in self.request_events)},
+                "primary_model": self.model,
+                "model": getattr(self.client, 'selected_model', None) or self.model}

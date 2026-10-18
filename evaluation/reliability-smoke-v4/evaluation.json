@@ -1,0 +1,88 @@
+{
+  "total_messages": 2,
+  "results_received": 1,
+  "missing_results": [
+    "M003"
+  ],
+  "urgency_accuracy": 0.5,
+  "action_exact_accuracy": 0.0,
+  "patient_accuracy": 0.5,
+  "intent_exact_accuracy": 0.5,
+  "action_precision": 0.5,
+  "action_recall": 0.5,
+  "emergency_cases": [
+    "M003"
+  ],
+  "emergency_recall": 0.0,
+  "missed_emergencies": [
+    "M003"
+  ],
+  "must_not_violations": [],
+  "failures": [
+    {
+      "id": "M001",
+      "failed_checks": [
+        "action_exact"
+      ],
+      "missing_actions": [],
+      "extra_actions": [
+        "route_to_clinician"
+      ]
+    },
+    {
+      "id": "M003",
+      "failed_checks": [
+        "urgency",
+        "action_exact",
+        "patient",
+        "intent_exact"
+      ],
+      "missing_actions": [
+        "escalate_emergency"
+      ],
+      "extra_actions": []
+    }
+  ],
+  "safety_review_complete": false,
+  "unreviewed_messages": [
+    "M003"
+  ],
+  "identity_note": "PDF requires null for unverified senders; labels M011/M027 carry target IDs. Identity disagreements are reported without changing labels.",
+  "processing_errors": [
+    {
+      "id": "M001",
+      "error": "InternalServerError: Provider request failed; inspect request_events"
+    }
+  ],
+  "run_summary": {
+    "status": "failed",
+    "provider": "gemini",
+    "model": "gemini-3.8-flash",
+    "fallback_models": [
+      "gemini-2.5-flash",
+      "gemini-2.5-flash-lite"
+    ],
+    "models_attempted": [
+      "gemini-3.8-flash",
+      "gemini-2.5-flash"
+    ],
+    "models_used": [
+      "gemini-2.5-flash"
+    ],
+    "model_calls": 7,
+    "tokens": {
+      "input_tokens": 16660,
+      "output_tokens": 106
+    },
+    "usage_complete": false,
+    "estimated_cost_usd": null,
+    "cost_basis": "Model fallback attempted; per-model pricing not configured",
+    "latency_ms": {
+      "measured_messages": 1,
+      "mean": 77437.0,
+      "median": 77437.0,
+      "max": 77437.0
+    }
+  },
+  "submission_ready": false
+}

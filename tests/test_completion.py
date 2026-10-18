@@ -82,7 +82,8 @@ def test_legacy_json_cannot_bypass_final_action_validation():
     asyncio.run(scenario())
 
 
-def test_transport_retry_does_not_repeat_an_executed_refill():
+@pytest.mark.parametrize('failure', ['timeout', 'server'])
+def test_request_retry_does_not_repeat_an_executed_refill(failure):
     import json
     import httpx
     from openai import AsyncOpenAI
@@ -93,6 +94,8 @@ def test_transport_retry_does_not_repeat_an_executed_refill():
     def handle(request):
         calls.append(request)
         if len(calls) >= 3:
+            if failure == 'server':
+                return httpx.Response(503, json={'error': {'message': 'Temporary unavailable'}})
             raise httpx.ReadTimeout('controlled timeout', request=request)
         name, args = ('triage_message', {'urgency':'routine','intents':['refill']}) if len(calls)==1 else ('prepare_refill_for_approval', {'medication':'lisinopril'})
         return httpx.Response(200,json=completion({'role':'assistant','content':None,'tool_calls':[
@@ -136,3 +139,35 @@ def test_language_survives_retriage_but_not_a_new_message():
     assert instance.audit()['response_language']=='Spanish'
     instance.begin_message(message())
     assert instance.audit()['response_language']=='English'
+
+@pytest.mark.parametrize('fail_after_mutation',[False,True])
+def test_model_fallback_keeps_tools_once_and_reports_selected_model(fail_after_mutation):
+    import json
+    import httpx
+    from openai import AsyncOpenAI
+    from clinic_assist.providers import GeminiAdapter
+    from test_providers import completion
+    requested=[]
+    def handle(request):
+        body=json.loads(request.content)
+        requested.append(body['model'])
+        if len(requested)==1 or (fail_after_mutation and len(requested)==4):
+            return httpx.Response(429,json={'error':{'message':'Daily quota exhausted'}})
+        name,args=[('triage_message',{'urgency':'routine','intents':['refill']}),
+            ('prepare_refill_for_approval',{'medication':'lisinopril'}),
+            ('finish_message',{'actions':['prepare_refill_for_approval']})][len(requested)-2]
+        return httpx.Response(200,json=completion({'role':'assistant','content':None,'tool_calls':[
+            {'id':str(len(requested)),'type':'function','function':{'name':name,'arguments':json.dumps(args)}}]}))
+    async def scenario():
+        async with AsyncOpenAI(api_key='offline-test',max_retries=0,http_client=httpx.AsyncClient(transport=httpx.MockTransport(handle))) as client:
+            adapter=GeminiAdapter(client,min_interval=0,fallback_models=['gemini-backup','gemini-third'])
+            outcome=await Agent(LocalMCP(),adapter,'gemini-primary').process(message())
+            assert outcome['model']=='gemini-backup'
+            assert outcome['primary_model']=='gemini-primary'
+            assert outcome['metrics']['models_attempted']==['gemini-primary','gemini-backup']
+            assert bool(outcome['error'])==fail_after_mutation
+            assert len([e for e in outcome['audit']['events'] if e['kind']=='prepare_refill_for_approval'])==1
+            assert outcome['metrics']['model_calls']==4
+            assert outcome['usage']['input_tokens']==(246 if fail_after_mutation else 369)
+    asyncio.run(scenario())
+    assert requested==['gemini-primary','gemini-backup','gemini-backup','gemini-backup']

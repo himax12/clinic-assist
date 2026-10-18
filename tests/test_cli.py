@@ -99,3 +99,42 @@ def test_gemini_access_failure_stops_before_second_message(tmp_path, status):
     assert calls == ["M001"]
     manifest = json.loads((output / "run.json").read_text())
     assert manifest["unprocessed_ids"] == ["M002"]
+
+
+def test_batch_reports_fallback_policy_actual_models_and_unknown_mixed_cost(tmp_path,monkeypatch):
+    import asyncio
+    from argparse import Namespace
+    from contextlib import asynccontextmanager
+    from openai import AsyncOpenAI
+    import httpx
+    from clinic_assist.cli import run
+    from clinic_assist.providers import GeminiAdapter
+    from test_providers import completion
+    requests=[]
+    def handle(request):
+        body=json.loads(request.content)
+        requests.append(body)
+        if len(requests)==1:
+            return httpx.Response(429,json={'error':{'message':'Daily quota exhausted'}})
+        name,args=('triage_message',{'urgency':'routine','intents':['other']}) if len(requests)==2 else ('finish_message',{'actions':['acknowledge']})
+        return httpx.Response(200,json=completion({'role':'assistant','content':None,'tool_calls':[
+            {'id':str(len(requests)),'type':'function','function':{'name':name,'arguments':json.dumps(args)}}]}))
+    @asynccontextmanager
+    async def client(*args,**kwargs):
+        async with AsyncOpenAI(api_key='offline-test',max_retries=0,http_client=httpx.AsyncClient(transport=httpx.MockTransport(handle))) as api:
+            yield GeminiAdapter(api,min_interval=0,fallback_models=['gemini-backup'])
+    monkeypatch.setattr('clinic_assist.providers.model_client',client)
+    monkeypatch.setenv('GEMINI_API_KEY','offline-test')
+    monkeypatch.setenv('INPUT_USD_PER_MILLION','1')
+    monkeypatch.setenv('OUTPUT_USD_PER_MILLION','2')
+    output=tmp_path/'fallback'
+    args=Namespace(messages=ROOT/'data/messages_sample.json',data=ROOT/'data',output=output,limit=1,
+        model='gemini-primary',provider='gemini',request_interval=0)
+    assert asyncio.run(run(args))==0
+    manifest=json.loads((output/'run.json').read_text())
+    assert manifest['fallback_models']==['gemini-backup']
+    assert manifest['models_attempted']==['gemini-primary','gemini-backup']
+    assert manifest['models_used']==['gemini-backup']
+    assert manifest['message_metrics'][0]['model']=='gemini-backup'
+    assert manifest['estimated_cost_usd'] is None
+    assert 'per-model' in manifest['cost_basis']

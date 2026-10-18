@@ -51,6 +51,8 @@ class RunStore:
         self.ids = []
         self.errors = []
         self.tokens = {'input_tokens': 0, 'output_tokens': 0}
+        self.fallback_models = [name.strip() for name in os.getenv('GEMINI_FALLBACK_MODELS', '').split(',') if name.strip()] if provider == 'gemini' else []
+        self.models_attempted, self.models_used = [], []
 
     def start(self):
         if not self.started:
@@ -61,6 +63,7 @@ class RunStore:
     def manifest(self, status, unprocessed=()):
         save_json(self.path / 'run.json', {'status': status, 'provider': self.provider,
             'model': self.model, 'processed_ids': self.ids, 'unprocessed_ids': list(unprocessed),
+            'fallback_models': self.fallback_models, 'models_attempted': self.models_attempted, 'models_used': self.models_used,
             'tokens': self.tokens, 'errors': self.errors,
             'state_model': 'Shared sequential MCP session; fresh data on restart'})
 
@@ -78,13 +81,22 @@ class RunStore:
         self.append('traces.jsonl', outcome)
         self.ids.append(outcome['result']['id'])
         self.add_usage(outcome['usage'])
+        self.record_requests(outcome.get('request_events', []))
         if outcome['error']:
             self.errors.append({'id': outcome['result']['id'], 'error': outcome['error']})
         self.manifest('failed' if self.errors else 'completed')
 
-    def interrupted(self, message_id, trace, usage, error):
+    def record_requests(self, events):
+        for event in events:
+            if event['model'] not in self.models_attempted:
+                self.models_attempted.append(event['model'])
+            if event['status'] == 'completed' and event['model'] not in self.models_used:
+                self.models_used.append(event['model'])
+
+    def interrupted(self, message_id, trace, usage, error, request_events=()):
         self.start()
-        self.append('traces.jsonl', {'message_id': message_id, 'trace': trace, 'error': error})
+        self.append('traces.jsonl', {'message_id': message_id, 'trace': trace, 'error': error, 'request_events': list(request_events)})
+        self.record_requests(request_events)
         self.add_usage(usage)
         self.errors.append({'id': message_id, 'error': error})
         self.manifest('interrupted', [message_id])
@@ -145,7 +157,8 @@ class Backend:
             return await self.agent.process(message)
         except BaseException as exc:
             self.broken = True
-            self.store.interrupted(message['id'], self.agent.trace, self.agent.usage, type(exc).__name__)
+            self.store.interrupted(message['id'], self.agent.trace, self.agent.usage, type(exc).__name__,
+                request_events=getattr(self.agent, 'request_events', []))
             raise
 
     async def close(self):
@@ -179,6 +192,7 @@ class Shell:
     def status(self):
         key = 'GEMINI_API_KEY' if self.provider == 'gemini' else 'OPENAI_API_KEY'
         detail = (f'Provider  {self.provider}\nModel     {self.model}\n'
+            f'Fallbacks {", ".join(self.store.fallback_models) or "disabled"}\n'
             f'API key   {"configured" if os.getenv(key) else "missing - browsing still available"}\n'
             f'Clock     {self.data.today} / {self.data.timezone.key}\n'
             f'Sender    {self.sender["from_name"] if self.sender else "not set"}\n'
@@ -213,6 +227,8 @@ class Shell:
         self.console.print(Panel(safe_text(result['reply_draft']), title='Reply draft - not sent', border_style=color, padding=(1, 2)))
         self.console.print(safe_text(f'{result["id"]}  |  {urgency.upper()}  |  patient: {result["patient_id"] or "unverified"}', style=color))
         self.console.print(safe_text('Actions: ' + ', '.join(result['actions'])))
+        if outcome.get('model'):
+            self.console.print(safe_text('Model: ' + outcome['model'], style='dim'))
         if result['routed_to']:
             self.console.print(safe_text('Queues: ' + ', '.join(result['routed_to'])))
         if outcome['error']:
