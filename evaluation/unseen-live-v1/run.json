@@ -1,0 +1,111 @@
+{
+  "status": "completed",
+  "provider": "gemini",
+  "model": "gemini-3.8-flash",
+  "fallback_models": [
+    "gemini-2.5-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite"
+  ],
+  "models_attempted": [
+    "gemini-3.8-flash",
+    "gemini-2.5-flash",
+    "gemini-3.5-flash-lite"
+  ],
+  "models_used": [
+    "gemini-3.5-flash-lite"
+  ],
+  "messages": 6,
+  "processed_ids": [
+    "UNSEEN-E1",
+    "UNSEEN-E2",
+    "UNSEEN-P1",
+    "UNSEEN-M1",
+    "UNSEEN-A1",
+    "UNSEEN-I1"
+  ],
+  "unprocessed_ids": [],
+  "tokens": {
+    "input_tokens": 97913,
+    "output_tokens": 659
+  },
+  "estimated_cost_usd": null,
+  "cost_basis": "Model fallback attempted; per-model pricing not configured",
+  "errors": [],
+  "message_metrics": [
+    {
+      "id": "UNSEEN-E1",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 26953.0,
+      "model_calls": 3,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    },
+    {
+      "id": "UNSEEN-E2",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 35438.0,
+      "model_calls": 3,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    },
+    {
+      "id": "UNSEEN-P1",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 71531.0,
+      "model_calls": 6,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    },
+    {
+      "id": "UNSEEN-M1",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 108469.0,
+      "model_calls": 9,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    },
+    {
+      "id": "UNSEEN-A1",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 95657.0,
+      "model_calls": 8,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    },
+    {
+      "id": "UNSEEN-I1",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 60000.0,
+      "model_calls": 5,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    }
+  ],
+  "usage_complete": false,
+  "state_model": "Shared sequential MCP server; fresh source data at process start"
+}
