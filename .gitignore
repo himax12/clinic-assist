@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.env
+output/
+*.egg-info/
+*.log
+
+# Local reference material and working notes are not submission files.
+*.pdf
+*.zip
+docs/
+[Pp][Ll][Aa][Nn]*.md
+*[Pp][Ll][Aa][Nn].md
+[Aa][Ss][Ss][Ii][Gg][Nn][Mm][Ee][Nn][Tt]*.md
+[Pp][Rr][Oo][Gg][Rr][Ee][Ss][Ss]*.md
