@@ -2,6 +2,18 @@
 
 An AI front-desk agent for the fictional Maplewood Family Clinic. It uses Gemini by default through an actual MCP stdio server to verify senders, check refills, manage appointments, route messages and prepare unsent replies. OpenAI remains available as an explicit alternate provider. A separate evaluator compares results with the supplied labels.
 
+## Demo
+
+[![Watch the Clinic Assist demo](media/demo-preview.png)](media/clinic-assist-demo.mp4)
+
+[Watch or download the demo video](media/clinic-assist-demo.mp4). Recorded command output shows data validation, pending refill preparation, privacy enforcement, emergency routing and the test suite. The workflow uses scripted calls to the real local MCP server; it makes no LLM calls and does not demonstrate live Gemini triage accuracy.
+
+To reproduce the MCP demonstration locally after setup:
+
+```powershell
+.venv\Scripts\python.exe scripts/demo.py
+```
+
 ## Status
 
 Gemini is configured as the default and 58 offline tests pass. Live requests authenticate and execute MCP tools. The latest attempt prepared a refill pending provider approval, then hit a 60-second API timeout during finalization and recorded a human-review fallback. The preceding attempt also timed out. These are failed runs, retained in `output/gemini-smoke-3` and `output/gemini-smoke-4` with scoped evaluations. End-to-end live reliability and the 40-message evaluation remain pending; no full-dataset accuracy is claimed. The earlier OpenAI attempt failed due exhausted credits.
