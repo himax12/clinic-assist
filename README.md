@@ -4,9 +4,11 @@ An interactive terminal assistant for the fictional Maplewood Family Clinic. It 
 
 ## Demo
 
-[![Watch the Clinic Assist demo](media/demo-preview.png)](media/clinic-assist-demo.mp4)
+Play the interactive demo below:
 
-[Watch or download the interactive terminal demo](media/clinic-assist-demo.mp4). The recording shows the real prompt, command completion, sample messages and session status. It browses local data without making LLM calls; it does not demonstrate live Gemini triage accuracy.
+https://github.com/user-attachments/assets/b9db70a0-891e-4fd0-aaad-afb8b0f0ce46
+
+[Open or download the MP4](media/clinic-assist-demo.mp4). This 41-second recording launches the actual terminal with `uv run clinic-assist` and shows command completion, sample messages and session status. It browses local data without model API calls; it does not demonstrate live Gemini triage accuracy. The video attachment follows this private repository's access permissions.
 
 To reproduce the MCP demonstration locally after setup:
 
@@ -29,7 +31,7 @@ From the project folder, using Python 3.11+ and uv:
 ```powershell
 uv sync --locked --extra dev --python 3.12
 if (-not (Test-Path .env)) { Copy-Item .env.example .env }
-.venv\Scripts\clinic-assist.exe
+uv run clinic-assist
 ```
 
 The default command opens an interactive workspace with command completion, session input history, live tool activity and reply panels. Press **Tab** to complete commands, **Up/Down** for history, **Alt+Enter** for a new line and **Enter** to submit. Use `/quit` or **Ctrl+D** to close. **Ctrl+C** cancels a prompt; during processing it exits and preserves partial traces where storage is available. History is kept in memory only.
