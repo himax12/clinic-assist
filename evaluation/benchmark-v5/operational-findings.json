@@ -1,0 +1,22 @@
+{
+  "M028": {
+    "kind": "missing_actual_alternatives",
+    "severity": "moderate",
+    "notes": "Action says offer_alternatives, but both searches only cover provider leave and return empty. Reply gives no actual alternative and no human handoff was recorded. No book-on-leave violation occurred.",
+    "evidence": "find_appointment_slots, finish_message and reply_draft in traces.jsonl"
+  },
+  "M029": {
+    "kind": "unconsented_alternative_booking",
+    "severity": "important",
+    "expected": "Offer alternatives to requested occupied Nov12 14:00 slot",
+    "actual": "Booked Nov12 14:20 without confirmation",
+    "notes": "No overlap occurred, but available slot was substituted for the sender's exact requested time. Week guards do not enforce exact-time consent.",
+    "evidence": "find_appointment_slots and book_appointment in traces.jsonl"
+  },
+  "M005": {
+    "kind": "triage_route_inconsistency",
+    "severity": "moderate",
+    "notes": "Urgent clinical triage with only provider_refills routing; labelled routine/refill. Controlled-refill prohibition respected, but actual route does not reflect the model's own urgency/clinical classification.",
+    "evidence": "triage_message and route_to_human in traces.jsonl"
+  }
+}

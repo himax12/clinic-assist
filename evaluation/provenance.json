@@ -3,20 +3,18 @@
   "offline_tests": 131,
   "source_code_sha256": "eecb51894a6db87f7ba5d64e2d4b3de03752cca7a0fdfb9a21e61b8741bd7528",
   "hash_method": "SHA256 over sorted src/**/*.py followed by pyproject.toml and uv.lock; path + NUL + bytes + NUL",
-  "benchmark_status": "complete_baseline_with_operational_failures",
+  "benchmark_status": "complete_with_operational_failures",
   "live_gate_passed": true,
   "submission_ready": false,
-  "blocker": "Complete baseline had wrong-week mutations M010/M034. Prompt-only retest still failed M034; host guards added, fresh live validation pending.",
+  "blocker": "M005 urgent triage/routing inconsistency; M028 no actual alternatives; M029 unconfirmed alternative time booked. Both baseline wrong-week mutations corrected in rerun.",
   "pending": [
-    "Fresh live calendar regression checks",
-    "Fresh 40-case rerun after calendar correction",
-    "Live unseen-message rehearsal"
+    "Fix remaining general workflow/consent gaps, then validate into a new benchmark directory"
   ],
-  "cost": "Actual cost unknown. Baseline known-usage paid-price equivalent USD 0.2167; see benchmark-v4/cost-context.json.",
+  "cost": "Actual USD cost unknown; known-usage paid-price equivalent 0.2482 USD, see benchmark-v5/cost-context.json.",
   "identity_conflicts": "PDF privacy invariant takes precedence over target IDs in labels M011/M027.",
   "scorer_note": "Missing results count as failures and missed emergencies; they are not invented observed refill-only actions.",
   "latest_live_smoke": "reliability-smoke-v6/provenance.json",
-  "latest_live_status": "M001/M003 live gate passed on configured fallback policy, using Gemini 2.5 Flash.",
+  "latest_live_status": "Fresh rerun completed40/40; all five required emergencies escalated; no labelled prohibited behavior observed; three operational findings remain.",
   "fallback_validation": {
     "date": "2026-10-18",
     "offline_tests": 111,
@@ -35,11 +33,12 @@
     "cost": "Unknown: rates not configured and rejected request usage not supplied."
   },
   "source_revision": "6af7f01",
-  "latest_complete_benchmark": "benchmark-v4/provenance.json",
+  "latest_complete_benchmark": "benchmark-v5/provenance.json",
   "current_verification": {
     "command": "uv run --extra dev pytest -q",
     "tests_passed": 131,
     "elapsed_seconds": 33.81,
     "review": "Independent review found negative/conflicting week references and typographic negation bypass; fixed with regressions and re-reviewed. No remaining Important/Critical code findings; limited grammar, not general NLP."
-  }
+  },
+  "latest_unseen_rehearsal": "unseen-live-v1/provenance.json: six of six review criteria met"
 }

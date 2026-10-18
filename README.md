@@ -87,11 +87,13 @@ Emergency classification also applies on later triage calls. If a mutation alrea
 
 ## Validation status
 
-**131 tests pass. The first complete live benchmark processed all 40 messages using Gemini 3.5 Flash-Lite through the configured fallback chain. Submission readiness remains false.**
+**131 tests pass. The [latest live benchmark](evaluation/benchmark-v5/evaluation.json) processed all 40 original messages through one fresh sequential MCP session using Gemini 3.5 Flash-Lite via the configured fallback chain. Submission readiness remains false.**
 
-The [baseline report](evaluation/benchmark-v4/evaluation.json) records 95% urgency accuracy, 72.5% exact action sets, 75.5% action precision, 78.7% action recall and all five labelled emergencies escalated. Every reply and trace was reviewed: no labelled prohibited behaviour was observed, but two appointments were moved/booked in the wrong requested week. Those operational failures block readiness even though their action labels match. Computed calendar anchors and explicit-week mutation guards have since been added; fresh live validation is in progress. These guards cover a limited English/Spanish grammar and require clarification for negative or competing week references.
+Measured: 97.5% urgency accuracy, 75.0% exact action sets, 77.1% action precision, 78.7% action recall, and all five labelled emergencies escalated. Every reply and trace was reviewed: no labelled prohibited behaviour was observed. Three operational findings remain: urgent triage without matching clinical routing, missing actual alternatives, and booking an alternative time without confirmation. See [review notes](evaluation/benchmark-v5/safety-review.json) and [findings](evaluation/benchmark-v5/operational-findings.json).
 
-The run used 253 model requests and reported 680,049 input / 5,074 output tokens, averaging 75.7 seconds per message. Actual USD cost is unknown; the [documented paid-price equivalent](evaluation/benchmark-v4/cost-context.json) is USD 0.2167 for known usage only. Primary-model quota failures are recorded, not hidden. See [review notes](evaluation/benchmark-v4/safety-review.json) and [provenance](evaluation/benchmark-v4/provenance.json). Earlier partial attempts remain preserved alongside the [successful live refill/emergency gate](evaluation/reliability-smoke-v6/provenance.json).
+Both wrong-week mutations from the [preserved baseline](evaluation/benchmark-v4/evaluation.json) are corrected in the rerun. Explicit-week guards cover a limited English/Spanish grammar; negative or competing week references require clarification. All [six unseen live cases](evaluation/unseen-live-v1/provenance.json) met their review criteria. Earlier partial and failed attempts remain preserved under `evaluation/`.
+
+The latest run used 257 model requests and reported 783,801 input / 5,224 output tokens, averaging 77.0 seconds per message. Actual USD cost is unknown; the [documented paid-price equivalent](evaluation/benchmark-v5/cost-context.json) is USD 0.2482 for known usage only. Primary-model quota failures remain in the traces. See [provenance](evaluation/benchmark-v5/provenance.json).
 
 The evaluator measures urgency, exact action sets, action precision/recall, identity, intents and emergency recall. Every reply and trace also needs an explicit review against labelled prohibited behaviours; absent observations do not mean safe. M011/M027 retain identity-label disagreements because unverified senders must have a null patient ID.
 
@@ -125,6 +127,6 @@ Traces record every attempted model and fallback reason. Batch reports include c
 
 Reused: supplied synthetic fixtures, MCP and OpenAI Python SDKs, Pydantic, Rich, prompt-toolkit and pytest. Built here: policy tools, scoped verification, agent orchestration, evidence-backed replies, evaluation and terminal UI. AI coding assistance was used.
 
-Next: validate calendar corrections with fresh live regressions, rerun all 40 cases and rehearse unseen messages. No sample-ID-specific rules. Replies remain conservative; there is no durable queue, outbound messaging or conversation memory.
+Next: enforce exact-time confirmation, return actual alternatives after empty searches, align clinical routing with triage, then rerun the benchmark. No sample-ID-specific rules. Replies remain conservative; there is no durable queue, outbound messaging or conversation memory.
 
 Real patient use would require authenticated identity, staff permissions, encrypted durable storage, monitored clinical handoffs, consent/retention controls and clinical/privacy/security review.
