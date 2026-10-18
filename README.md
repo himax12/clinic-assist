@@ -8,7 +8,7 @@ Play the interactive demo below:
 
 https://github.com/user-attachments/assets/b9db70a0-891e-4fd0-aaad-afb8b0f0ce46
 
-[Open or download the MP4](media/clinic-assist-demo.mp4). This 41-second recording launches the actual terminal with `uv run clinic-assist` and shows command completion, sample messages and session status. It browses local data without model API calls; it does not demonstrate live Gemini triage accuracy. The video attachment follows this private repository's access permissions.
+This 41-second recording launches the actual terminal with `uv run clinic-assist` and shows command completion, sample messages and session status. It browses local data without model API calls; it does not demonstrate live Gemini triage accuracy. The video attachment follows this private repository's access permissions.
 
 To reproduce the MCP demonstration locally after setup:
 
