@@ -90,3 +90,24 @@ def test_following_week_guard_uses_selected_booking_in_another_month():
     with pytest.raises(ValueError,match='2026-12-14.*2026-12-20'):
         clinic.reschedule('original','OKAFOR','2026-11-17','09:00')
     assert clinic.reschedule('original','OKAFOR','2026-12-14','09:00')['date']=='2026-12-14'
+
+
+@pytest.mark.parametrize('body',[
+    'Do not book next week; book this week instead.',
+    'I cannot come next week.',
+    "Next week doesn't work for me.",
+    'Next week doesn’t work for me.',
+    'I can’t come next week.',
+    'No puedo ir la próxima semana.',
+    'Move it to the following week or next week; I am unsure.',
+])
+def test_negative_or_conflicting_week_mentions_require_clarification(body):
+    clinic=Clinic(ClinicData.load(ROOT/'data'))
+    clinic.data.appointments=[]
+    clinic.begin_message(dict(id='negative-week',received_at='2026-11-09T10:18:00-06:00',
+        channel='sms',from_name='Robert Chen',from_contact='555-0102',body=body))
+    clinic.triage('routine',['schedule'])
+    for day in ('2026-11-10','2026-11-17'):
+        with pytest.raises(ValueError,match='clarification'):
+            clinic.book('PATEL',day,'09:00','follow_up')
+    assert clinic.data.appointments==[]

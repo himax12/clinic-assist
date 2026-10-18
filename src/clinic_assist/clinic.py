@@ -238,8 +238,18 @@ class Clinic:
         """
         text = ''.join(char for char in unicodedata.normalize('NFKD', self._context().body.casefold())
                        if not unicodedata.combining(char))
+        text = text.replace('\u2019', "'").replace('\u2018', "'")
         following = re.search(r'\b(?:following week|semana siguiente)\b', text)
         next_week = re.search(r'\b(?:next week|proxima semana|semana proxima|semana que viene)\b', text)
+        # A mention is not necessarily a positive request. This deliberately
+        # conservative grammar sends negative/competing references to a human;
+        # it must never turn an unavailable week into permission to book it.
+        negative = re.search(r"\b(?:not|no|never|cannot|can't|don't|doesn't|isn't|won't|nunca|tampoco)\b", text)
+        this_week = re.search(r'\b(?:this week|esta semana)\b', text)
+        if (following or next_week) and (negative or this_week or (following and next_week)):
+            raise ValueError('Negative or competing week references require clarification before changing an appointment')
+        if following and original_date is None:
+            raise ValueError('Following week requires an identified original appointment; ask for clarification')
         if original_date and following:
             reference = date.fromisoformat(original_date)
         elif next_week:
