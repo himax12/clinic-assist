@@ -1,5 +1,7 @@
 """Policy checks and state changes. No LLM or evaluation labels live here."""
 import copy
+import re
+import unicodedata
 from datetime import date, datetime, time, timedelta
 from threading import RLock
 from uuid import uuid4
@@ -228,9 +230,32 @@ class Clinic:
         self._record("slot_search", slots=slots)
         return slots
 
+    def _check_requested_week(self, day: str, original_date: str | None = None) -> None:
+        """Conservative boundary for explicit week phrases, not a general date parser.
+
+        Ambiguous or conflicting text must be clarified rather than escaping this
+        constraint. Reschedules anchor 'following week' to the owned booking.
+        """
+        text = ''.join(char for char in unicodedata.normalize('NFKD', self._context().body.casefold())
+                       if not unicodedata.combining(char))
+        following = re.search(r'\b(?:following week|semana siguiente)\b', text)
+        next_week = re.search(r'\b(?:next week|proxima semana|semana proxima|semana que viene)\b', text)
+        if original_date and following:
+            reference = date.fromisoformat(original_date)
+        elif next_week:
+            reference = self.data.today
+        else:
+            return
+        window = calendar_context(reference)['next_week']
+        if not window['start_date'] <= day <= window['end_date']:
+            raise ValueError(f"Requested week requires {window['start_date']} through {window['end_date']}; "
+                             'search that range or ask for clarification before changing the appointment')
+
     def book(self, provider: str, day: str, start: str, visit_type: str) -> dict:
         with self._lock:
             self._action_allowed()
+            self._verified()
+            self._check_requested_week(day)
             slot = self._slot(provider, day, start, visit_type)
             appt = {"id": "B" + uuid4().hex[:12], "patient_id": self._verified()["id"], **slot, "status": "booked"}
             self.data.appointments.append(appt)
@@ -257,6 +282,7 @@ class Clinic:
         with self._lock:
             self._action_allowed()
             a = self._owned(appointment_id)
+            self._check_requested_week(day, a['date'])
             slot = self._slot(provider, day, start, a["visit_type"], ignore=appointment_id)
             a.update(slot)
             self._record("reschedule_appointment", appointment=copy.deepcopy(a))

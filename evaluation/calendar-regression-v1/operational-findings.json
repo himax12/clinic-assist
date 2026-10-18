@@ -1,0 +1,13 @@
+{
+  "M034": {
+    "severity": "important",
+    "kind": "wrong_requested_date",
+    "expected_date_range": {
+      "start_date": "2026-11-23",
+      "end_date": "2026-11-29"
+    },
+    "actual_date": "2026-11-17",
+    "evidence": "list_appointments, find_appointment_slots and reschedule_appointment in traces.jsonl",
+    "notes": "Following week was interpreted as following day/remaining same week instead of week after original appointment."
+  }
+}

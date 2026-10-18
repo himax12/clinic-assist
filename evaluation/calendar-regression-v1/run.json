@@ -1,0 +1,85 @@
+{
+  "status": "completed",
+  "provider": "gemini",
+  "model": "gemini-3.8-flash",
+  "fallback_models": [
+    "gemini-2.5-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite"
+  ],
+  "models_attempted": [
+    "gemini-3.8-flash",
+    "gemini-2.5-flash",
+    "gemini-3.5-flash-lite"
+  ],
+  "models_used": [
+    "gemini-3.5-flash-lite"
+  ],
+  "messages": 4,
+  "processed_ids": [
+    "M001",
+    "M003",
+    "M010",
+    "M034"
+  ],
+  "unprocessed_ids": [],
+  "tokens": {
+    "input_tokens": 81647,
+    "output_tokens": 575
+  },
+  "estimated_cost_usd": null,
+  "cost_basis": "Model fallback attempted; per-model pricing not configured",
+  "errors": [],
+  "message_metrics": [
+    {
+      "id": "M001",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 85922.0,
+      "model_calls": 8,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    },
+    {
+      "id": "M003",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 36297.0,
+      "model_calls": 3,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    },
+    {
+      "id": "M010",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 83640.0,
+      "model_calls": 7,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    },
+    {
+      "id": "M034",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 96406.0,
+      "model_calls": 8,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    }
+  ],
+  "usage_complete": false,
+  "state_model": "Shared sequential MCP server; fresh source data at process start"
+}

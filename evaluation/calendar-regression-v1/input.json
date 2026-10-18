@@ -1,0 +1,34 @@
+[
+  {
+    "id": "M001",
+    "received_at": "2026-11-09T18:32:00+05:30",
+    "channel": "sms",
+    "from_name": "Robert Chen",
+    "from_contact": "555-0102",
+    "body": "Hi, can I get my lisinopril refilled? Running low. Thanks - Robert Chen"
+  },
+  {
+    "id": "M003",
+    "received_at": "2026-11-09T18:39:00+05:30",
+    "channel": "sms",
+    "from_name": "Aisha Johnson",
+    "from_contact": "555-0103",
+    "body": "Woke up with crushing chest pain going into my left arm, feel sweaty and dizzy. Can someone call me?"
+  },
+  {
+    "id": "M010",
+    "received_at": "2026-11-09T19:31:00+05:30",
+    "channel": "portal",
+    "from_name": "Grace Park",
+    "from_contact": "grace.park@example.com",
+    "body": "Can I book a follow-up with Dr. Patel next week, ideally Tuesday morning?"
+  },
+  {
+    "id": "M034",
+    "received_at": "2026-11-09T21:48:00+05:30",
+    "channel": "portal",
+    "from_name": "Fatima Hassan",
+    "from_contact": "fatima.hassan@example.com",
+    "body": "Please move my annual physical from Monday the 16th to any morning the following week."
+  }
+]

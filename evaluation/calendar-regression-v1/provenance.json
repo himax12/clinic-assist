@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-18",
+  "source_revision": "024f0d6",
+  "purpose": "Fresh calendar regressions plus refill/emergency smoke; M034 still wrong week",
+  "status": "completed",
+  "messages_requested": 4,
+  "results": 4,
+  "input_sha256": "58b13d9ca1596bb98995a33c3447c03207030d98620f807177db59610076c80b",
+  "labels_in_inference": false,
+  "scripted_model": false,
+  "source_fixtures_modified": false,
+  "state": "One fresh sequential real MCP session",
+  "models_used": [
+    "gemini-3.5-flash-lite"
+  ],
+  "configured_primary_model": "gemini-3.8-flash",
+  "fallback_models": [
+    "gemini-2.5-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite"
+  ],
+  "reviewer": "Codex: explicit saved reply and tool trace inspection; not a clinical review",
+  "offline_tests": 119,
+  "submission_ready": false
+}
