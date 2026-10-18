@@ -1,0 +1,13 @@
+{
+  "date": "2026-10-18",
+  "source": "GET https://generativelanguage.googleapis.com/v1beta/models",
+  "http_status": 200,
+  "selected_listed_models": [
+    "gemini-2.5-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite"
+  ],
+  "note": "Listing a model does not prove quota or compatibility availability. gemini-2.5-flash-lite was listed on native API but returned404 for live compatibility request; it was removed from configured chain.",
+  "pricing_reference": "https://ai.google.dev/gemini-api/docs/pricing",
+  "billing_changed": false
+}

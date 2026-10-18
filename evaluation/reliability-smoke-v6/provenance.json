@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-18",
+  "source_revision": "50544bc",
+  "source_code_sha256": "ee25a2145a569366d123b555d82042fef644b532681400a47780e3a11c4d80fa",
+  "purpose": "Fresh live M001/M003 gate; does not count as benchmark",
+  "status": "passed",
+  "live_gate_passed": true,
+  "configured_primary_model": "gemini-3.8-flash",
+  "models_used": [
+    "gemini-2.5-flash"
+  ],
+  "fallback_models": [
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite"
+  ],
+  "offline_tests": 111,
+  "submission_ready": false,
+  "pending": [
+    "Full 40-case live benchmark and safety review",
+    "Live unseen-message rehearsal"
+  ]
+}

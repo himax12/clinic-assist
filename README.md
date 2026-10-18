@@ -87,11 +87,11 @@ Emergency classification also applies on later triage calls. If a mutation alrea
 
 ## Validation status
 
-**111 offline tests pass. Live acceptance and the complete 40-case evaluation remain unfinished. A [completed two-case live run](evaluation/reliability-smoke-v5/provenance.json) escalated M003 and prepared M001’s refill, but M001 included an extra routing action and failed exact-action scoring.**
+**119 tests pass. The first complete live benchmark processed all 40 messages using Gemini 3.5 Flash-Lite through the configured fallback chain. Submission readiness remains false.**
 
-The retained initial 40-case benchmark stopped at its first model request: M001 received a human-review fallback and 39 messages were unprocessed. All five labelled emergencies remain missing. **Submission readiness is false; live model performance and cost are unknown.**
+The [baseline report](evaluation/benchmark-v4/evaluation.json) records 95% urgency accuracy, 72.5% exact action sets, 75.5% action precision, 78.7% action recall and all five labelled emergencies escalated. Every reply and trace was reviewed: no labelled prohibited behaviour was observed, but two appointments were moved/booked in the wrong requested week. Those operational failures block readiness even though their action labels match. Calendar grounding has since been added; fresh live validation is in progress.
 
-See the [benchmark report](evaluation/benchmark-v1/evaluation.json), [run metadata](evaluation/benchmark-v1/run.json), [traces](evaluation/benchmark-v1/traces.jsonl) and [evidence provenance](evaluation/provenance.json). Failed smoke runs are preserved in `evaluation/reliability-smoke-v1`, `evaluation/reliability-smoke-v2` and [the latest live retry](evaluation/reliability-smoke-v3/provenance.json). That retry received HTTP 429 on the first model request. A [later live fallback attempt](evaluation/reliability-smoke-v4/provenance.json) reached Gemini 2.5 Flash and prepared a refill before a later HTTP 503 caused a safe handoff. Both partial replies/traces were explicitly reviewed; neither attempt completed the live gate. A [four-case scripted rehearsal](evaluation/offline-rehearsal-v1/provenance.json) checks actual CLI/MCP execution, not live model accuracy.
+The run used 253 model requests and reported 680,049 input / 5,074 output tokens, averaging 75.7 seconds per message. Actual USD cost is unknown; the [documented paid-price equivalent](evaluation/benchmark-v4/cost-context.json) is USD 0.2167 for known usage only. Primary-model quota failures are recorded, not hidden. See [review notes](evaluation/benchmark-v4/safety-review.json) and [provenance](evaluation/benchmark-v4/provenance.json). Earlier partial attempts remain preserved alongside the [successful live refill/emergency gate](evaluation/reliability-smoke-v6/provenance.json).
 
 The evaluator measures urgency, exact action sets, action precision/recall, identity, intents and emergency recall. Every reply and trace also needs an explicit review against labelled prohibited behaviours; absent observations do not mean safe. M011/M027 retain identity-label disagreements because unverified senders must have a null patient ID.
 
@@ -107,7 +107,7 @@ uv run clinic-assist evaluate --results output/full-1/results.jsonl --output out
 
 Use a fresh output directory each time. Runs save `results.jsonl`, `traces.jsonl` and `run.json`; processing errors return exit code 2. Scratch runs stay under ignored `output/`; retained evaluation evidence belongs in `evaluation/`.
 
-For safety review, create `observations.json` mapping each reviewed message ID to observed label prohibition names; `[]` means explicitly reviewed clean. Pass it with `evaluate --observations path/to/observations.json`.
+For safety review, create `observations.json` mapping each reviewed message ID to observed label prohibition names; `[]` means explicitly reviewed clean. Pass it with `evaluate --observations path/to/observations.json`. Reviewed semantic errors, such as a booking on the wrong requested date, belong in `operational-findings.json` beside the results (or pass `--operational-findings`). These findings block readiness even when action labels match.
 
 For your own JSON input, use `run --messages new-message.json --output output/new-1`. Each message needs `id`, timezone-aware `received_at`, `channel` (`sms`, `portal` or `email`), `from_name`, `from_contact` and `body`; `stated_dob` is optional.
 
@@ -117,14 +117,14 @@ Run the standalone MCP server with `uv run python -m clinic_assist.server --data
 
 See [.env.example](.env.example) for provider, model and optional pricing settings. Defaults: Gemini, the configured `GEMINI_MODEL`, 12-second request pacing and a 60-second timeout. Timeout/connection and transient server failures each allow one retry of the same model request without replaying completed MCP operations. Quota retries are bounded; unknown usage and cost stay explicit.
 
-`GEMINI_FALLBACK_MODELS=gemini-2.5-flash,gemini-2.5-flash-lite` enables an ordered fallback chain (maximum three alternatives). Leave it empty to disable fallback. After bounded retries, initial-request quota, missing-model, temporary server or connection failures can try the next model. Invalid credentials, permission errors, invalid requests and unusable responses stop without switching. Once the first model response succeeds, that model is pinned for the message; later failures preserve operations and hand off without restarting the message or migrating thought signatures.
+`GEMINI_FALLBACK_MODELS=gemini-2.5-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite` enables an ordered fallback chain (maximum three alternatives). Leave it empty to disable fallback. After bounded retries, initial-request quota, missing-model, temporary server or connection failures can try the next model. Invalid credentials, permission errors, invalid requests and unusable responses stop without switching. Once the first model response succeeds, that model is pinned for the message; later failures preserve operations and hand off without restarting the message or migrating thought signatures.
 
-Traces record every attempted model and fallback reason. Batch reports include configured fallbacks, attempted/used models and the actual model per message. Cost remains unknown when fallback is attempted because a single configured token rate cannot price multiple models reliably. For a fixed-model benchmark, set `$env:GEMINI_FALLBACK_MODELS = ""` before running. A valid Gemini key is required for every model in the chain.
+Traces record every attempted model and fallback reason. Batch reports include configured fallbacks, attempted/used models and the actual model per message. Cost remains unknown when fallback is attempted because a single configured token rate cannot price multiple models reliably. For a fixed-model benchmark, leave `GEMINI_FALLBACK_MODELS` empty in `.env` and remove any inherited nonempty override. A valid Gemini key is required for every model in the chain.
 
 ## Built with and next steps
 
 Reused: supplied synthetic fixtures, MCP and OpenAI Python SDKs, Pydantic, Rich, prompt-toolkit and pytest. Built here: policy tools, scoped verification, agent orchestration, evidence-backed replies, evaluation and terminal UI. AI coding assistance was used.
 
-Next: restore live quota, rerun smoke gates and all 40 cases, review every reply/trace and add independent adversarial cases. No sample-ID-specific rules. Replies remain conservative; there is no durable queue, outbound messaging or conversation memory.
+Next: validate calendar corrections with fresh live regressions, rerun all 40 cases and rehearse unseen messages. No sample-ID-specific rules. Replies remain conservative; there is no durable queue, outbound messaging or conversation memory.
 
 Real patient use would require authenticated identity, staff permissions, encrypted durable storage, monitored clinical handoffs, consent/retention controls and clinical/privacy/security review.

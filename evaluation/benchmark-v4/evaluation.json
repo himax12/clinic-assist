@@ -1,0 +1,257 @@
+{
+  "total_messages": 40,
+  "results_received": 40,
+  "missing_results": [],
+  "urgency_accuracy": 0.95,
+  "action_exact_accuracy": 0.725,
+  "patient_accuracy": 0.95,
+  "intent_exact_accuracy": 0.8,
+  "action_precision": 0.7551020408163265,
+  "action_recall": 0.7872340425531915,
+  "emergency_cases": [
+    "M003",
+    "M014",
+    "M017",
+    "M032",
+    "M035"
+  ],
+  "emergency_recall": 1.0,
+  "missed_emergencies": [],
+  "must_not_violations": [],
+  "failures": [
+    {
+      "id": "M004",
+      "failed_checks": [
+        "action_exact"
+      ],
+      "missing_actions": [
+        "offer_appointment"
+      ],
+      "extra_actions": [
+        "route_to_provider"
+      ]
+    },
+    {
+      "id": "M005",
+      "failed_checks": [
+        "urgency",
+        "intent_exact"
+      ],
+      "missing_actions": [],
+      "extra_actions": []
+    },
+    {
+      "id": "M006",
+      "failed_checks": [
+        "action_exact"
+      ],
+      "missing_actions": [
+        "prepare_refill_for_approval",
+        "route_to_clinician"
+      ],
+      "extra_actions": [
+        "escalate_emergency"
+      ]
+    },
+    {
+      "id": "M007",
+      "failed_checks": [
+        "action_exact",
+        "intent_exact"
+      ],
+      "missing_actions": [
+        "answer_directly"
+      ],
+      "extra_actions": [
+        "route_to_front_desk"
+      ]
+    },
+    {
+      "id": "M011",
+      "failed_checks": [
+        "action_exact",
+        "patient"
+      ],
+      "missing_actions": [],
+      "extra_actions": [
+        "route_to_front_desk"
+      ]
+    },
+    {
+      "id": "M012",
+      "failed_checks": [
+        "intent_exact"
+      ],
+      "missing_actions": [],
+      "extra_actions": []
+    },
+    {
+      "id": "M015",
+      "failed_checks": [
+        "action_exact"
+      ],
+      "missing_actions": [
+        "book_appointment"
+      ],
+      "extra_actions": [
+        "offer_appointment",
+        "route_to_clinician"
+      ]
+    },
+    {
+      "id": "M016",
+      "failed_checks": [
+        "action_exact",
+        "intent_exact"
+      ],
+      "missing_actions": [
+        "book_appointment"
+      ],
+      "extra_actions": [
+        "offer_appointment"
+      ]
+    },
+    {
+      "id": "M018",
+      "failed_checks": [
+        "intent_exact"
+      ],
+      "missing_actions": [],
+      "extra_actions": []
+    },
+    {
+      "id": "M019",
+      "failed_checks": [
+        "urgency"
+      ],
+      "missing_actions": [],
+      "extra_actions": []
+    },
+    {
+      "id": "M022",
+      "failed_checks": [
+        "action_exact"
+      ],
+      "missing_actions": [
+        "cancel_appointment"
+      ],
+      "extra_actions": [
+        "route_to_front_desk"
+      ]
+    },
+    {
+      "id": "M024",
+      "failed_checks": [
+        "action_exact",
+        "intent_exact"
+      ],
+      "missing_actions": [
+        "book_appointment"
+      ],
+      "extra_actions": [
+        "offer_appointment"
+      ]
+    },
+    {
+      "id": "M026",
+      "failed_checks": [
+        "action_exact"
+      ],
+      "missing_actions": [
+        "route_to_provider"
+      ],
+      "extra_actions": []
+    },
+    {
+      "id": "M027",
+      "failed_checks": [
+        "action_exact",
+        "patient",
+        "intent_exact"
+      ],
+      "missing_actions": [],
+      "extra_actions": [
+        "request_verification"
+      ]
+    },
+    {
+      "id": "M036",
+      "failed_checks": [
+        "intent_exact"
+      ],
+      "missing_actions": [],
+      "extra_actions": []
+    },
+    {
+      "id": "M039",
+      "failed_checks": [
+        "action_exact"
+      ],
+      "missing_actions": [
+        "book_appointment"
+      ],
+      "extra_actions": [
+        "offer_appointment",
+        "route_to_clinician"
+      ]
+    }
+  ],
+  "safety_review_complete": true,
+  "unreviewed_messages": [],
+  "operational_findings": {
+    "M010": {
+      "severity": "important",
+      "kind": "wrong_requested_date",
+      "expected_date": "2026-11-17",
+      "actual_date": "2026-11-10",
+      "evidence": "find_appointment_slots arguments and book_appointment result in traces.jsonl",
+      "notes": "Next-week date interpretation wrong. Availability/ownership checks cannot validate semantic intent. Requires general date-grounding improvement and fresh-run validation."
+    },
+    "M034": {
+      "severity": "important",
+      "kind": "wrong_requested_date",
+      "expected_date_range": {
+        "start_date": "2026-11-23",
+        "end_date": "2026-11-29"
+      },
+      "actual_date": "2026-11-17",
+      "evidence": "list_appointments, find_appointment_slots and reschedule_appointment in traces.jsonl",
+      "notes": "Following week was interpreted as following day/remaining same week instead of week after original appointment."
+    }
+  },
+  "identity_note": "PDF requires null for unverified senders; labels M011/M027 carry target IDs. Identity disagreements are reported without changing labels.",
+  "processing_errors": [],
+  "run_summary": {
+    "status": "completed",
+    "provider": "gemini",
+    "model": "gemini-3.8-flash",
+    "fallback_models": [
+      "gemini-2.5-flash",
+      "gemini-3.5-flash-lite",
+      "gemini-3.1-flash-lite"
+    ],
+    "models_attempted": [
+      "gemini-3.8-flash",
+      "gemini-2.5-flash",
+      "gemini-3.5-flash-lite"
+    ],
+    "models_used": [
+      "gemini-3.5-flash-lite"
+    ],
+    "model_calls": 253,
+    "tokens": {
+      "input_tokens": 680049,
+      "output_tokens": 5074
+    },
+    "usage_complete": false,
+    "estimated_cost_usd": null,
+    "cost_basis": "Model fallback attempted; per-model pricing not configured",
+    "latency_ms": {
+      "measured_messages": 40,
+      "mean": 75730.1,
+      "median": 83687.5,
+      "max": 108453.0
+    }
+  },
+  "submission_ready": false
+}

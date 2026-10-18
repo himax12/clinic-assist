@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-18",
+  "source_revision": "50544bc",
+  "status": "blocked_by_daily_quota_after_triage",
+  "input": "data/messages_sample.json",
+  "input_sha256": "846cb42b4e1a667bd5679b5680ce54d5a0b5c6e120626aef300ca53a8643e563",
+  "input_order": "All40 original messages in supplied order",
+  "state": "One fresh sequential MCP session",
+  "primary_model": "gemini-3.8-flash",
+  "fallback_models": [
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite"
+  ],
+  "models_used": [
+    "gemini-2.5-flash"
+  ],
+  "labels_visible_to_agent": false,
+  "source_fixtures_modified": false,
+  "submission_ready": false,
+  "notes": "Gemini 2.5 Flash completed initial triage then hit daily quota. No model migration after successful response; batch stopped with39 unprocessed."
+}

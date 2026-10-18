@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-18",
+  "inference_source_revision": "50544bc",
+  "status": "completed_with_correctness_failures",
+  "messages": 40,
+  "input_order": "Original supplied order; one fresh sequential MCP session",
+  "input_sha256": "846cb42b4e1a667bd5679b5680ce54d5a0b5c6e120626aef300ca53a8643e563",
+  "configured_primary": "gemini-3.8-flash",
+  "fallback_models": [
+    "gemini-2.5-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite"
+  ],
+  "models_used": [
+    "gemini-3.5-flash-lite"
+  ],
+  "labels_in_inference": false,
+  "scripted_model": false,
+  "source_fixtures_modified": false,
+  "reviewer": "Codex; explicit inspection of every saved reply and tool trace against labelled must_not and semantic request constraints",
+  "scoring_note": "New operational_findings support surfaces wrong-date mutations without altering action-set scores. Scorer differs from inference commit only in evaluation support.",
+  "operational_failures": [
+    "M010",
+    "M034"
+  ],
+  "submission_ready": false
+}
