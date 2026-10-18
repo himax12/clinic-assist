@@ -1,12 +1,12 @@
 # Clinic Assist
 
-An AI front-desk agent for the fictional Maplewood Family Clinic. It uses Gemini by default through an actual MCP stdio server to verify senders, check refills, manage appointments, route messages and prepare unsent replies. OpenAI remains available as an explicit alternate provider. A separate evaluator compares results with the supplied labels.
+An interactive terminal assistant for the fictional Maplewood Family Clinic. It uses Gemini by default through an actual MCP stdio server to verify senders, check refills, manage appointments, route messages and prepare unsent replies. OpenAI remains available as an explicit alternate provider. A separate evaluator compares results with the supplied labels.
 
 ## Demo
 
 [![Watch the Clinic Assist demo](media/demo-preview.png)](media/clinic-assist-demo.mp4)
 
-[Watch or download the demo video](media/clinic-assist-demo.mp4). Recorded command output shows data validation, pending refill preparation, privacy enforcement, emergency routing and the test suite. The workflow uses scripted calls to the real local MCP server; it makes no LLM calls and does not demonstrate live Gemini triage accuracy.
+[Watch or download the interactive terminal demo](media/clinic-assist-demo.mp4). The recording shows the real prompt, command completion, sample messages and session status. It browses local data without making LLM calls; it does not demonstrate live Gemini triage accuracy.
 
 To reproduce the MCP demonstration locally after setup:
 
@@ -16,7 +16,7 @@ To reproduce the MCP demonstration locally after setup:
 
 ## Status
 
-Gemini is configured as the default and 58 offline tests pass. Live requests authenticate and execute MCP tools. The latest attempt prepared a refill pending provider approval, then hit a 60-second API timeout during finalization and recorded a human-review fallback. The preceding attempt also timed out. These are failed runs, retained in `output/gemini-smoke-3` and `output/gemini-smoke-4` with scoped evaluations. End-to-end live reliability and the 40-message evaluation remain pending; no full-dataset accuracy is claimed. The earlier OpenAI attempt failed due exhausted credits.
+The interactive workspace and batch commands have 69 passing offline tests. Gemini is configured as the default. Live requests authenticate and execute MCP tools. The latest attempt prepared a refill pending provider approval, then hit a 60-second API timeout during finalization and recorded a human-review fallback. The preceding attempt also timed out. These are failed runs, retained locally in `output/gemini-smoke-3` and `output/gemini-smoke-4` with scoped evaluations. End-to-end live reliability and the 40-message evaluation remain pending; no full-dataset accuracy is claimed. The earlier OpenAI attempt failed due exhausted credits.
 
 ## Setup and run on Windows
 
@@ -25,7 +25,20 @@ From the project folder, using Python 3.11+ and uv:
 ```powershell
 uv sync --locked --extra dev --python 3.12
 if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+.venv\Scripts\clinic-assist.exe
 ```
+
+The default command opens an interactive workspace with command completion, session input history, live tool activity and reply panels. Press **Tab** to complete commands, **Up/Down** for history, **Alt+Enter** for a new line and **Enter** to submit. Use `/quit` or **Ctrl+D** to close. **Ctrl+C** cancels a prompt; during processing it exits and preserves partial traces where storage is available. History is kept in memory only.
+
+- `/inbox` lists the sample messages; `/open M001` reads one without an API call.
+- `/run M001` processes a sample through the configured model and real MCP tools.
+- Type an ordinary message to process it. The app first asks for the sender's name, contact and optional DOB; `/sender` changes these details. Typed messages use the supplied clinic date at 09:00 in its configured timezone, shown by `/status`.
+- `/last` shows the latest reply, `/trace` its actual tool calls, and `/status` the provider, clock, token usage and output location.
+- `/help` shows commands; `/clear` clears the screen.
+
+Browsing works without an API key. Processing connects lazily and keeps one MCP server alive throughout the session, so simulated changes persist between messages. Each session saves results under a unique `output/chat-*` folder. The same sample ID is processed once per session. A transport interruption requires a restart; a failed save blocks further processing while keeping the latest result accessible through `/last` and `/trace`.
+
+The original `inspect`, `run` and `evaluate` batch commands remain available. Launch explicitly with `python -m clinic_assist chat` to pass options such as `--provider`, `--model`, `--data` or `--output`.
 
 Create a Gemini key in [Google AI Studio](https://aistudio.google.com/apikey) and set `GEMINI_API_KEY` in `.env` locally. Do not paste the key into a chat or commit it. `LLM_PROVIDER` defaults to `gemini`; `GEMINI_MODEL` defaults to `gemini-3.8-flash` and can be overridden with `--model`. This is a starting model choice, not a benchmark conclusion. Google's current pricing lists free-tier text input/output for this model, but available quotas depend on the project. Optional token rates in `.env` enable an approximate cost; use rates for the selected provider/model and do not assume a free tier based only on the key.
 

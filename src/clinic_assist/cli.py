@@ -92,6 +92,13 @@ async def run(args) -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Synthetic clinic inbox agent and independent evaluation")
     sub = parser.add_subparsers(dest="command", required=True)
+    chat_cmd = sub.add_parser("chat", help="Open the interactive clinic inbox workspace (default)")
+    chat_cmd.add_argument("--data", type=Path, default=Path("data"))
+    chat_cmd.add_argument("--output", type=Path)
+    chat_cmd.add_argument("--model")
+    chat_cmd.add_argument("--provider", choices=["gemini", "openai"])
+    chat_cmd.add_argument("--request-interval", type=float)
+    chat_cmd.add_argument("--no-env", action="store_true")
     inspect_cmd = sub.add_parser("inspect", help="Validate input files without API calls")
     inspect_cmd.add_argument("--data", type=Path, default=Path("data"))
     run_cmd = sub.add_parser("run", help="Process messages using Gemini (default) or OpenAI and a local MCP subprocess")
@@ -108,7 +115,7 @@ def main() -> int:
     eval_cmd.add_argument("--results", type=Path, required=True)
     eval_cmd.add_argument("--observations", type=Path, help="Reviewed mapping of message IDs to observed prohibited behaviors; [] means reviewed clean")
     eval_cmd.add_argument("--output", type=Path, default=Path("output/evaluation.json"))
-    args = parser.parse_args()
+    args = parser.parse_args(sys.argv[1:] or ["chat"])
     try:
         if args.command == "inspect":
             data = ClinicData.load(args.data)
@@ -132,7 +139,7 @@ def main() -> int:
             if args.provider not in {"gemini", "openai"}:
                 parser.error("LLM_PROVIDER must be gemini or openai")
             key_name = "GEMINI_API_KEY" if args.provider == "gemini" else "OPENAI_API_KEY"
-            if not os.getenv(key_name):
+            if args.command == "run" and not os.getenv(key_name):
                 parser.error(key_name + " is not configured. Set it locally or in .env; do not paste it into chat.")
             from .providers import DEFAULT_GEMINI_MODEL
             model_variable = "GEMINI_MODEL" if args.provider == "gemini" else "OPENAI_MODEL"
@@ -142,9 +149,19 @@ def main() -> int:
                 args.request_interval = float(os.getenv("GEMINI_REQUEST_INTERVAL", "12"))
             if args.request_interval < 0:
                 parser.error("--request-interval must be nonnegative")
+            if args.command == "chat":
+                from datetime import datetime
+                from uuid import uuid4
+                from .interactive import run_shell
+                if args.output is None:
+                    args.output = Path("output") / ("chat-" + datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + uuid4().hex[:6])
+                return asyncio.run(run_shell(args))
             if args.limit is not None and args.limit < 1:
                 parser.error("--limit must be positive")
             return asyncio.run(run(args))
+    except KeyboardInterrupt:
+        print("\nSession interrupted. Check the session output for partial traces.", file=sys.stderr)
+        return 130
     except (ValueError, OSError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1

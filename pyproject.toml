@@ -3,7 +3,7 @@ name = "clinic-assist"
 version = "0.1.0"
 description = "Synthetic clinic inbox agent with MCP tools and separate evaluation"
 requires-python = ">=3.11"
-dependencies = ["pydantic>=2,<3", "mcp>=1,<2", "openai>=2,<3", "python-dotenv>=1,<2", "tzdata>=2025"]
+dependencies = ["pydantic>=2,<3", "mcp>=1,<2", "openai>=2,<3", "python-dotenv>=1,<2", "tzdata>=2025", "rich>=14,<15", "prompt-toolkit>=3.0.52,<4"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "pytest-asyncio>=0.24"]
