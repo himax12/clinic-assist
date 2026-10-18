@@ -20,8 +20,8 @@ def create_server(data_path: Path) -> FastMCP:
 
     @server.tool()
     def public_policy() -> dict:
-        """Read clinic date/timezone, public hours, providers, visit types and policies. No patient records."""
-        return clinic.data.clinic
+        """Read clinic date/timezone, computed calendar-week anchors, public hours, providers, visit types and policies. No patient records."""
+        return clinic.public_policy()
 
     @server.tool()
     def triage_message(urgency: Urgency, intents: list[Intent], response_language: ResponseLanguage = "unspecified") -> dict:
@@ -50,7 +50,7 @@ def create_server(data_path: Path) -> FastMCP:
 
     @server.tool()
     def list_appointments() -> dict:
-        """List future booked appointments only for the verified patient. Resolve ambiguous cancellation/reschedule requests before changing anything."""
+        """List future booked appointments only for the verified patient. Each following_week range is computed relative to that appointment's date, not today. Resolve ambiguous cancellation/reschedule requests before changing anything."""
         return {"appointments": clinic.list_appointments()}
 
     @server.tool()

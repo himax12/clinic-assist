@@ -80,3 +80,21 @@ def test_evaluator_preserves_model_fallback_provenance():
     assert report['run_summary']['model']=='gemini-primary'
     assert report['run_summary']['models_used']==['gemini-backup']
     assert report['run_summary']['fallback_models']==['gemini-backup']
+
+
+def test_reviewed_operational_failure_blocks_readiness_despite_matching_actions():
+    labels=[label(f'X{i}') for i in range(40)]
+    results=[prediction(f'X{i}',urgency='emergency',actions=['escalate_emergency'],routed_to=['clinician_urgent']) for i in range(40)]
+    reviewed={row['id']:[] for row in results}
+    manifest={'status':'completed','errors':[],'message_metrics':[]}
+    assert evaluate(labels,results,reviewed,manifest)['submission_ready']
+    finding={'X0':{'kind':'wrong_requested_date','severity':'important','notes':'Actual booking date did not match request.'}}
+    report=evaluate(labels,results,reviewed,manifest,operational_findings=finding)
+    assert report['action_exact_accuracy']==1
+    assert report['operational_findings']==finding
+    assert not report['submission_ready']
+
+
+def test_operational_findings_cannot_be_attached_to_missing_results():
+    with pytest.raises(ValueError,match='observed result'):
+        evaluate([label()],[],operational_findings={'X1':{'kind':'wrong_requested_date'}})

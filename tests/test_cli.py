@@ -138,3 +138,18 @@ def test_batch_reports_fallback_policy_actual_models_and_unknown_mixed_cost(tmp_
     assert manifest['message_metrics'][0]['model']=='gemini-backup'
     assert manifest['estimated_cost_usd'] is None
     assert 'per-model' in manifest['cost_basis']
+
+
+def test_evaluate_loads_adjacent_operational_review(tmp_path):
+    source=tmp_path/'results.jsonl'
+    result={'id':'M010','patient_id':'P013','intents':['schedule'],'urgency':'routine',
+        'actions':['book_appointment'],'routed_to':[],'tool_calls':['book_appointment'],
+        'reply_draft':'Appointment booked: 2026-11-10.'}
+    source.write_text(json.dumps(result)+'\n',encoding='utf-8')
+    findings={'M010':{'kind':'wrong_requested_date','notes':'Requested following week; booked current week.'}}
+    (tmp_path/'operational-findings.json').write_text(json.dumps(findings),encoding='utf-8')
+    target=tmp_path/'report.json'
+    completed=subprocess.run([sys.executable,'-m','clinic_assist','evaluate','--results',str(source),'--output',str(target)],
+        cwd=ROOT,capture_output=True,text=True,timeout=30)
+    assert completed.returncode==0,completed.stderr
+    assert json.loads(target.read_text(encoding='utf-8'))['operational_findings']==findings

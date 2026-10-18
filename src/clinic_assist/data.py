@@ -2,9 +2,22 @@
 import copy
 import json
 from dataclasses import dataclass
-from datetime import date, time
+from datetime import date, time, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
+
+
+def calendar_context(reference: date) -> dict:
+    """ISO calendar-week anchors computed from the clinic/appointment date."""
+    monday = reference - timedelta(days=reference.weekday())
+
+    def week(offset):
+        start = monday + timedelta(weeks=offset)
+        return {"start_date": start.isoformat(), "end_date": (start + timedelta(days=6)).isoformat(),
+                "weekdays": {name: (start + timedelta(days=i)).isoformat()
+                    for i, name in enumerate(("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"))}}
+
+    return {"reference_date": reference.isoformat(), "this_week": week(0), "next_week": week(1)}
 
 
 @dataclass

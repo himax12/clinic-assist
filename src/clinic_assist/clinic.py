@@ -6,7 +6,7 @@ from uuid import uuid4
 from typing import get_args
 
 from .contracts import Action, Intent, Message, Queue, ResponseLanguage, Urgency
-from .data import ClinicData
+from .data import ClinicData, calendar_context
 
 
 def norm(value: str) -> str:
@@ -33,6 +33,11 @@ class Clinic:
         self.intents: list[str] = []
         self.response_language: ResponseLanguage = "unspecified"
         self._lock = RLock()
+
+    def public_policy(self) -> dict:
+        policy = copy.deepcopy(self.data.clinic)
+        policy['date_context'] = calendar_context(self.data.today)
+        return policy
 
     def begin_message(self, message: dict) -> dict:
         self.message = Message.model_validate(message)
@@ -164,8 +169,12 @@ class Clinic:
 
     def list_appointments(self) -> list[dict]:
         patient_id = self._verified()["id"]
-        return copy.deepcopy([a for a in self.data.appointments if a["patient_id"] == patient_id
+        appointments = copy.deepcopy([a for a in self.data.appointments if a["patient_id"] == patient_id
                               and a["status"] == "booked" and a["date"] >= self.data.today.isoformat()])
+        for appointment in appointments:
+            following = calendar_context(date.fromisoformat(appointment['date']))['next_week']
+            appointment['following_week'] = {key: following[key] for key in ('start_date', 'end_date')}
+        return appointments
 
     def _slot(self, provider: str, day: str, start: str, visit_type: str, ignore: str | None = None) -> dict:
         c = self.data.clinic

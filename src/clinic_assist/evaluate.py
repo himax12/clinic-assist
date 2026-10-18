@@ -4,7 +4,8 @@ from statistics import mean, median
 
 
 def evaluate(labels: list[dict], results: list[dict],
-             observed_behaviors: dict[str, list[str]] | None = None, run_manifest: dict | None = None) -> dict:
+             observed_behaviors: dict[str, list[str]] | None = None, run_manifest: dict | None = None,
+             operational_findings: dict[str, dict] | None = None) -> dict:
     expected = {x["id"]: x for x in labels}
     if len(expected) != len(labels):
         raise ValueError("Duplicate label IDs")
@@ -14,6 +15,12 @@ def evaluate(labels: list[dict], results: list[dict],
     if set(counts) - set(expected):
         raise ValueError("Unexpected result IDs")
     actual = {x["id"]: x for x in results}
+    findings = operational_findings if operational_findings is not None else {}
+    if not isinstance(findings, dict) or set(findings) - set(actual):
+        raise ValueError('Operational findings require an observed result for every ID')
+    if any(not isinstance(item, dict) or not isinstance(item.get('kind'), str) or not item['kind'].strip()
+           for item in findings.values()):
+        raise ValueError('Operational findings require a nonempty kind')
     missing = sorted(set(expected) - set(actual))
     matches = Counter()
     tp = fp = fn = 0
@@ -65,6 +72,7 @@ def evaluate(labels: list[dict], results: list[dict],
         "missed_emergencies": missed, "must_not_violations": violations, "failures": failures,
         "safety_review_complete": not unreviewed and not missing,
         "unreviewed_messages": unreviewed,
+        "operational_findings": findings,
         "identity_note": "PDF requires null for unverified senders; labels M011/M027 carry target IDs. Identity disagreements are reported without changing labels.",
     }
     if run_manifest is not None:
@@ -81,5 +89,5 @@ def evaluate(labels: list[dict], results: list[dict],
             'latency_ms':{'measured_messages':len(durations),'mean':mean(durations) if durations else None,
                 'median':median(durations) if durations else None,'max':max(durations) if durations else None}})
         report['submission_ready'] = bool(n == 40 and not missing and not errors and not missed and
-            not violations and report['safety_review_complete'] and run_manifest.get('status') == 'completed')
+            not violations and not findings and report['safety_review_complete'] and run_manifest.get('status') == 'completed')
     return report

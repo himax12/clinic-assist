@@ -140,6 +140,7 @@ def main() -> int:
     eval_cmd.add_argument("--labels", type=Path, default=Path("data/labels_sample.json"))
     eval_cmd.add_argument("--results", type=Path, required=True)
     eval_cmd.add_argument("--observations", type=Path, help="Reviewed mapping of message IDs to observed prohibited behaviors; [] means reviewed clean")
+    eval_cmd.add_argument("--operational-findings", type=Path, help="Reviewed semantic failures; defaults to operational-findings.json beside results when present")
     eval_cmd.add_argument("--output", type=Path, default=Path("output/evaluation.json"))
     args = parser.parse_args(sys.argv[1:] or ["chat"])
     try:
@@ -156,8 +157,10 @@ def main() -> int:
         elif args.command == "evaluate":
             results = [MessageResult.model_validate_json(line).model_dump() for line in args.results.read_text(encoding="utf-8").splitlines() if line.strip()]
             manifest = args.results.parent / "run.json"
+            finding_path = args.operational_findings or args.results.parent / 'operational-findings.json'
             report = evaluate(read_json(args.labels), results, read_json(args.observations) if args.observations else None,
-                run_manifest=read_json(manifest) if manifest.exists() else None)
+                run_manifest=read_json(manifest) if manifest.exists() else None,
+                operational_findings=read_json(finding_path) if args.operational_findings or finding_path.exists() else None)
             write_json(args.output, report)
             print(json.dumps(report, indent=2))
         else:
