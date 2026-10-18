@@ -1,151 +1,126 @@
 # Clinic Assist
 
-An interactive terminal assistant for the fictional Maplewood Family Clinic. It uses Gemini by default through an actual MCP stdio server to verify senders, check refills, manage appointments, route messages and prepare unsent replies. OpenAI remains available as an explicit alternate provider. A separate evaluator compares results with the supplied labels.
+A Python terminal assistant for a fictional clinic inbox. Gemini interprets messages; MCP tools verify senders, enforce clinic policies, manage appointments and prepare refill requests. Replies are drafted, never sent.
 
-## Demo
+## Quick start
 
-Play the interactive demo below:
-
-https://github.com/user-attachments/assets/b9db70a0-891e-4fd0-aaad-afb8b0f0ce46
-
-This 41-second recording launches the actual terminal with `uv run clinic-assist` and shows command completion, sample messages and session status. It browses local data without model API calls; it does not demonstrate live Gemini triage accuracy. The video attachment follows this private repository's access permissions.
-
-To reproduce the MCP demonstration locally after setup:
-
-```powershell
-.venv\Scripts\python.exe scripts/demo.py
-```
-
-## Status
-
-**89 offline tests pass. Live acceptance is blocked by Gemini HTTP 429, classified as daily quota exhaustion.** The full 40-message batch was attempted in original order, but its first model request was rejected. The agent recorded a human-review fallback for M001 and stopped, leaving 39 messages explicitly unprocessed. This is a failed benchmark, not a measured successful model run. The five required emergency cases remain missing in that benchmark; submission readiness is false.
-
-Actual evidence is included in [evaluation/benchmark-v1/evaluation.json](evaluation/benchmark-v1/evaluation.json), alongside [run metadata](evaluation/benchmark-v1/run.json), [traces](evaluation/benchmark-v1/traces.jsonl) and observations. Two failed live gates are retained under `evaluation/reliability-smoke-v1` and `evaluation/reliability-smoke-v2`. Zero accuracy/recall values in the blocked report reflect missing coverage and fallback results; they must not be presented as measured Gemini performance. Usage is incomplete and USD cost is unknown, not zero.
-
-Four unseen scenarios passed a [scripted-model CLI/MCP rehearsal](evaluation/offline-rehearsal-v1/provenance.json). It validates real tool execution and policy boundaries, not live model understanding. Terminal completion now removes the former final model request; its live success gate still needs to be rerun when quota is available. Historical timeout attempts remain locally under ignored `output/`.
-
-## Setup and run on Windows
-
-From the project folder, using Python 3.11+ and uv:
+From the project folder on Windows, with [uv](https://docs.astral.sh/uv/) installed:
 
 ```powershell
 uv sync --locked --extra dev --python 3.12
 if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+```
+
+Add your `GEMINI_API_KEY` to `.env`, then launch:
+
+```powershell
 uv run clinic-assist
 ```
 
-The default command opens an interactive workspace with command completion, session input history, live tool activity and reply panels. Press **Tab** to complete commands, **Up/Down** for history, **Alt+Enter** for a new line and **Enter** to submit. Use `/quit` or **Ctrl+D** to close. **Ctrl+C** cancels a prompt; during processing it exits and preserves partial traces where storage is available. History is kept in memory only.
+Browsing works without a key. Processing requires available Gemini quota. Keep `.env` local.
 
-- `/inbox` lists the sample messages; `/open M001` reads one without an API call.
-- `/run M001` processes a sample through the configured model and real MCP tools.
-- Type an ordinary message to process it. The app first asks for the sender's name, contact and optional DOB; `/sender` changes these details. Typed messages use the supplied clinic date at 09:00 in its configured timezone, shown by `/status`.
-- `/last` shows the latest reply, `/trace` its actual tool calls, and `/status` the provider, clock, token usage and output location.
-- `/help` shows commands; `/clear` clears the screen.
+- `/inbox` — list samples; `/open M001` — read one.
+- `/run M001` — process a sample, or type your own message and supply sender details.
+- `/last` — view the reply; `/trace` — inspect tool calls; `/status` — view session details.
+- `/sender` — change sender details; `/help` — all commands; `/quit` — exit.
 
-Browsing works without an API key. Processing connects lazily and keeps one MCP server alive throughout the session, so simulated changes persist between messages. Each session saves results under a unique `output/chat-*` folder. The same sample ID is processed once per session. A transport interruption requires a restart; a failed save blocks further processing while keeping the latest result accessible through `/last` and `/trace`.
+**Tab** completes commands, **Up/Down** recalls input, **Alt+Enter** adds a line and **Enter** submits.
 
-Messages are independent, even in the interactive workspace. Sender details and clinic state persist, but conversational history does not. Follow-ups must restate the relevant request and appointment context; “Friday works” alone is not a supported continuation.
+## Demo
 
-The original `inspect`, `run` and `evaluate` batch commands remain available. Launch explicitly with `python -m clinic_assist chat` to pass options such as `--provider`, `--model`, `--data` or `--output`.
+https://github.com/user-attachments/assets/b9db70a0-891e-4fd0-aaad-afb8b0f0ce46
 
-Create a Gemini key in [Google AI Studio](https://aistudio.google.com/apikey) and set `GEMINI_API_KEY` in `.env` locally. Do not paste the key into a chat or commit it. `LLM_PROVIDER` defaults to `gemini`; `GEMINI_MODEL` defaults to `gemini-3.8-flash` and can be overridden with `--model`. This is a starting model choice, not a benchmark conclusion. Google's current pricing lists free-tier text input/output for this model, but available quotas depend on the project. Optional token rates in `.env` enable an approximate cost; use rates for the selected provider/model and do not assume a free tier based only on the key.
+41 seconds of the actual `uv run clinic-assist` interface. Shows local browsing and command completion; no model API calls or live triage are demonstrated. The video follows this private repository's access permissions.
 
-The compatibility adapter uses the installed OpenAI SDK against **Google's** `generativelanguage.googleapis.com` endpoint. Gemini credentials are never sent to OpenAI. It translates tool definitions and conversation history, preserves Gemini thought signatures and tracks prompt/completion tokens. No new SDK dependency is required.
+## Architecture
 
-`GEMINI_REQUEST_INTERVAL` defaults to 12 seconds between model requests and can be overridden with `--request-interval`. Short 429 rate limits get bounded retries that respect Retry-After. Daily/exhausted quotas are not retried indefinitely; invalid credentials or exhausted provider quota stop the remaining batch and leave unprocessed IDs explicit. Check your actual limits in AI Studio before running all 40 cases. One message may require several model requests.
+```mermaid
+flowchart LR
+    User[User] --> CLI[Interactive CLI or batch command]
+    CLI --> Agent[Agent loop]
+    Agent <-->|Model requests and tool proposals| Gemini[Gemini API]
+    Agent <-->|MCP over stdio| Tools[MCP server]
+    Tools --> Policy[Identity and clinic policy checks]
+    Data[Synthetic JSON fixtures] --> Policy
+    Policy <--> State[Run-scoped state and operation evidence]
+    Policy --> Reply[Validated reply templates]
+    Agent --> Output[Results, traces and run metrics]
+    Output --> Eval[Separate evaluator]
+    Labels[Expected labels and manual safety review] --> Eval
+```
 
-`MODEL_REQUEST_TIMEOUT` controls the SDK request timeout in seconds (default 60). Timeout/connection failures retry the same model request once; executed MCP operations are not replayed. An exhausted connection retry or terminal provider-access failure stops the batch. No model, provider or billing changes are made automatically.
+The model proposes tools; Python enforces permissions and policies. `agent.py` orchestrates, `providers.py` adapts Gemini, `server.py` exposes MCP tools, `clinic.py` owns operations, `replies.py` renders English/Spanish drafts and `evaluate.py` scores saved results. Labels stay outside inference.
 
-To explicitly use the older provider configuration, set `OPENAI_API_KEY`, optionally `OPENAI_MODEL`, and pass `--provider openai`. There is no silent fallback between providers.
+Gemini uses the OpenAI SDK pointed at Google's endpoint. OpenAI is an explicit alternate via `--provider openai`; there is no automatic provider or model fallback.
+
+## Message workflow
+
+```mermaid
+flowchart TD
+    Input[Incoming message and sender metadata] --> Bind[Validate timestamp and bind original metadata]
+    Bind --> Triage[Triage urgency, intents and response language]
+    Triage --> Emergency{Emergency detected?}
+    Emergency -->|Yes| Urgent[Record urgent handoff and lock mutations]
+    Emergency -->|No| Identity[Verify sender before accessing patient records]
+    Identity --> Operations[Check policies, clarify, execute permitted tools or hand off]
+    Operations --> More{More tool work needed?}
+    More -->|Yes| Operations
+    More -->|No| Finish[finish_message: validate actions against evidence]
+    Urgent --> Finish
+    Finish --> Result[Build result and unsent reply without another model call]
+    Result --> Save[Save result, actual tool trace and request metrics]
+    Triage -.->|Processing failure| Recovery[Preserve completed operations and route for human review]
+    Operations -.->|Processing failure| Recovery
+    Recovery --> Finish
+```
+
+Emergency classification also applies on later triage calls. If a mutation already occurred, its evidence is retained and the run records a safety failure. Exhausted connectivity, credentials or quota errors stop the batch and list remaining messages as unprocessed.
+
+## Safety and scope
+
+- Sender identity comes from host-bound metadata; unverified senders cannot access patient records. Host-only MCP tools are hidden from the model.
+- Refills create pending approval requests, never prescriptions. Scheduling checks ownership, hours, leave and overlaps; rescheduling is atomic.
+- Final actions require supporting operation or policy evidence. Replies use constrained templates and emergency locks.
+- Messages are independent: sender details and simulated clinic changes persist within a session, but conversation history does not. Follow-ups must restate context.
+- Data is synthetic, with a fixed clinic date of **2026-11-09, America/Chicago**. Incoming timestamps must include a timezone.
+- The MCP server trusts its local host. This is not ready for real patient data or public exposure.
+
+## Validation status
+
+**89 offline tests passed. Live Gemini acceptance remains blocked by HTTP 429 daily quota exhaustion.**
+
+The 40-case benchmark stopped at its first model request: M001 received a human-review fallback and 39 messages were unprocessed. All five labelled emergencies remain missing. **Submission readiness is false; live model performance and cost are unknown.**
+
+See the [benchmark report](evaluation/benchmark-v1/evaluation.json), [run metadata](evaluation/benchmark-v1/run.json), [traces](evaluation/benchmark-v1/traces.jsonl) and [evidence provenance](evaluation/provenance.json). Failed smoke runs are preserved in `evaluation/reliability-smoke-v1` and `evaluation/reliability-smoke-v2`. A [four-case scripted rehearsal](evaluation/offline-rehearsal-v1/provenance.json) checks actual CLI/MCP execution, not live model accuracy.
+
+The evaluator measures urgency, exact action sets, action precision/recall, identity, intents and emergency recall. Every reply and trace also needs an explicit review against labelled prohibited behaviours; absent observations do not mean safe. M011/M027 retain identity-label disagreements because unverified senders must have a null patient ID.
+
+## Tests and batch runs
 
 ```powershell
-.venv\Scripts\python.exe -m clinic_assist inspect
-.venv\Scripts\python.exe -m pytest -q
-.venv\Scripts\python.exe -m clinic_assist run --limit 1 --output output/smoke-1
-.venv\Scripts\python.exe -m clinic_assist run --output output/full-1
-.venv\Scripts\python.exe -m clinic_assist evaluate --results output/full-1/results.jsonl --output output/full-1/evaluation.json
+uv run pytest -q
+uv run clinic-assist inspect
+uv run clinic-assist run --limit 1 --output output/smoke-1
+uv run clinic-assist run --output output/full-1
+uv run clinic-assist evaluate --results output/full-1/results.jsonl --output output/full-1/evaluation.json
 ```
 
-Use a new output directory for each run; existing evidence is never silently overwritten. Run directories are ignored by Git, so explicitly include the final evaluation artifacts in your submission or attach them separately. `run` exits with code 2 when there are processing errors. Missing results stay missing and count against evaluation.
+Use a fresh output directory each time. Runs save `results.jsonl`, `traces.jsonl` and `run.json`; processing errors return exit code 2. Scratch runs stay under ignored `output/`; retained evaluation evidence belongs in `evaluation/`.
 
-To run the MCP server independently:
+For safety review, create `observations.json` mapping each reviewed message ID to observed label prohibition names; `[]` means explicitly reviewed clean. Pass it with `evaluate --observations path/to/observations.json`.
 
-```powershell
-.venv\Scripts\python.exe -m clinic_assist.server --data data
-```
+For your own JSON input, use `run --messages new-message.json --output output/new-1`. Each message needs `id`, timezone-aware `received_at`, `channel` (`sms`, `portal` or `email`), `from_name`, `from_contact` and `body`; `stated_dob` is optional.
 
-This speaks MCP on stdio, not an interactive terminal prompt. The `run` command launches and connects to it automatically.
+Run the standalone MCP server with `uv run python -m clinic_assist.server --data data`. It speaks stdio; the CLI normally starts it automatically.
 
-## Process a new message
+## Configuration
 
-Create a JSON object or array with `id`, `received_at` (with timezone), `channel` (`sms`, `portal` or `email`), `from_name`, `from_contact` and `body`. Include `stated_dob` only when actually supplied. For example:
+See [.env.example](.env.example) for provider, model and optional pricing settings. Defaults: Gemini, the configured `GEMINI_MODEL`, 12-second request pacing and a 60-second timeout. Timeout/connection failures retry a model request once without replaying completed MCP operations. Quota retries are bounded; unknown usage and cost stay explicit.
 
-```json
-{
-  "id": "NEW001",
-  "received_at": "2026-11-09T09:00:00-06:00",
-  "channel": "sms",
-  "from_name": "Robert Chen",
-  "from_contact": "555-0102",
-  "body": "Could you help me book a follow-up next Tuesday morning?"
-}
-```
+## Built with and next steps
 
-```powershell
-.venv\Scripts\python.exe -m clinic_assist run --messages new-message.json --output output/new-1
-```
+Reused: supplied synthetic fixtures, MCP and OpenAI Python SDKs, Pydantic, Rich, prompt-toolkit and pytest. Built here: policy tools, scoped verification, agent orchestration, evidence-backed replies, evaluation and terminal UI. AI coding assistance was used.
 
-No sample IDs or expected outcomes are used by the runtime. The trusted host supplies original message metadata; the model cannot change it or select an arbitrary patient's ID.
+Next: restore live quota, rerun smoke gates and all 40 cases, review every reply/trace and add independent adversarial cases. No sample-ID-specific rules. Replies remain conservative; there is no durable queue, outbound messaging or conversation memory.
 
-## Architecture and boundaries
-
-- `data.py` loads only clinic, patient, medication and appointment records into runtime state. It validates relationships and fixes the clinic clock to **2026-11-09, America/Chicago**.
-- `contracts.py` requires timezone-aware incoming timestamps and validates the exact result vocabulary.
-- `clinic.py` owns policy checks, source-bound verification, per-run state and operation events. Verification is reset for every message; state persists across messages.
-- `server.py` exposes typed MCP tools. `begin_message` and `message_audit` are host-only capabilities filtered out of model tools; the execution loop also rejects attempts to call them.
-- `agent.py` runs a bounded provider-neutral function loop. `providers.py` adapts it to Gemini Chat Completions; explicit OpenAI uses Responses. Triage is required first. `finish_message(actions)` validates evidence and completes the result immediately, with no final model round trip. Legacy JSON completion uses the same validator. `draft_reply` remains a compatibility tool but is hidden from the model.
-- `replies.py` renders English/Spanish drafts from policy and operation evidence. Visit-required claims need a supporting refill check; alternatives use the latest search. Triage chooses the response language from the current message or explicit request, falling back to verified preference and then English. An emergency immediately routes to the urgent queue and blocks further mutations. If discovered after a prior mutation, the operation remains in the trace/result and the run records a safety failure; the reply remains emergency-only. Drafts are never sent.
-- `evaluate.py` is independent of the agent and is the only runtime component that consumes expected labels through the evaluate command. `inspect` can inspect label IDs for input validation.
-
-The local stdio client is trusted. Do not expose this server as a public service: a direct client can call host tools to bind sender metadata. Production transport identity and authorisation require a different boundary.
-
-Refill preparation creates a pending approval request; it never approves, dispenses or decrements the patient's medication supply. Repeated requests reuse the pending item. Scheduling validates provider leave, holidays, opening/lunch times, visit duration, allowed start increments and overlaps. Rescheduling validates the replacement before changing the original.
-
-## Evaluation and safety review
-
-Each run saves `results.jsonl`, `traces.jsonl` and `run.json`. Traces contain actual operations plus request attempts, model step, elapsed time, HTTP status, failure stage, provider request ID when supplied and reported tokens. Credentials, raw provider error messages and private reasoning are excluded. `run.json` records per-message latency, request counts, processing errors, unprocessed IDs and optional cost. Unknown usage stays explicit, including on interrupted runs. The evaluator reads adjacent run metadata to expose provider failures and latency alongside classification scores.
-
-The evaluator reports accepted urgency accuracy, exact action-set accuracy, action precision/recall, patient identity and intent accuracy, emergency recall, missed emergencies and prohibited behaviors. Required emergency cases are labels requiring `escalate_emergency` or accepting only emergency; recall requires actual escalation output and urgent routing, not just an urgency string.
-
-Action-enum violations are checked directly. Semantic prohibitions such as disclosure, clinical advice, leave and double-booking must be reviewed against saved replies/traces. Without an explicit review the report says `safety_review_complete: false`. After reviewing each message, create an observations JSON mapping each reviewed ID to prohibited behaviors actually observed, or an empty list when reviewed clean:
-
-```json
-{
-  "M001": [],
-  "M003": ["automated_clinical_advice"]
-}
-```
-
-The example illustrates the format and is **not** a finding about a run. Supply all reviewed IDs and use the label's prohibition names:
-
-```powershell
-.venv\Scripts\python.exe -m clinic_assist evaluate --results output/full-1/results.jsonl --observations output/full-1/observations.json --output output/full-1/evaluation.json
-```
-
-The provided labels for M011 and M027 contain target patient IDs despite failed verification; the PDF requires null for unverified senders. This implementation follows the privacy invariant and reports the identity disagreements without changing the labels. Ambiguous cancellations with multiple matching bookings are clarified rather than guessed.
-
-## What was reused and built
-
-Reused: supplied synthetic data, official MCP and OpenAI Python SDKs, Pydantic, pytest, python-dotenv, tzdata, Rich and prompt-toolkit. Built here: clinic policy operations, scoped verification, MCP tools, orchestration, terminal completion, constrained replies, evaluator, request/failure accounting and interactive workspace. AI coding assistance was used.
-
-Official references: [Gemini OpenAI compatibility](https://ai.google.dev/gemini-api/docs/openai), [Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing), [Gemini rate limits](https://ai.google.dev/gemini-api/docs/rate-limits), [OpenAI function calling](https://developers.openai.com/api/docs/guides/function-calling), and [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk).
-
-## Limitations and another week
-
-Live triage, Spanish understanding, terminal completion and unseen-message performance still need successful measurement once quota is available. Final drafts are intentionally constrained and can be terse; scheduling clarification is conservative. All medication entries are interpreted as the supplied active list. The seed schedule is loaded as supplied; new changes enforce policy without rewriting historical entries. This is a sequential single-run system with no conversation memory, durable queue, external notification or outbound messaging. Reported usage from unusable successful responses is retained; rejected or interrupted requests can still have unknown usage, so recorded totals may be lower bounds.
-
-With another week: run and analyse the full dataset, add independently authored adversarial cases, improve intent/date extraction from observed failures, evaluate stronger models against cost, add evidence-aware clarification state and explicit provider/appointment consent handling, and expand reply templates based on measured gaps. Avoid tuning runtime rules to sample IDs.
-
-Before real patient data: authenticated transport identity, stronger verification than caller-controlled metadata, scoped staff roles, encryption and managed secrets, audited durable transactions and queues, real monitored clinical handoffs, consent and retention controls, clinician-approved safety protocols, privacy/security review and appropriate provider agreements. Fictional safety tests do not establish clinical readiness.
-
-The submission deadline is in the original email, not the PDF. Submit runnable code and actual evaluation evidence, then rehearse the new-message CLI for the interview.
+Real patient use would require authenticated identity, staff permissions, encrypted durable storage, monitored clinical handoffs, consent/retention controls and clinical/privacy/security review.
