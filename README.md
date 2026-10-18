@@ -87,7 +87,7 @@ Emergency classification also applies on later triage calls. If a mutation alrea
 
 ## Validation status
 
-**111 offline tests pass. Live acceptance and the complete 40-case evaluation remain unfinished.**
+**111 offline tests pass. Live acceptance and the complete 40-case evaluation remain unfinished. A [completed two-case live run](evaluation/reliability-smoke-v5/provenance.json) escalated M003 and prepared M001’s refill, but M001 included an extra routing action and failed exact-action scoring.**
 
 The retained initial 40-case benchmark stopped at its first model request: M001 received a human-review fallback and 39 messages were unprocessed. All five labelled emergencies remain missing. **Submission readiness is false; live model performance and cost are unknown.**
 

@@ -16,7 +16,7 @@
   "identity_conflicts": "PDF privacy invariant takes precedence over target IDs in labels M011/M027.",
   "scorer_note": "Missing results count as failures and missed emergencies; they are not invented observed refill-only actions.",
   "latest_live_smoke": "reliability-smoke-v5/provenance.json",
-  "latest_live_status": "M001 extra route_to_provider action; M003 correct. Both processing outcomes had no error.",
+  "latest_live_status": "M003 correctly escalated and M001 refill prepared; M001 extra route_to_provider fails exact action scoring. Both cases completed live on Gemini 2.5 Flash.",
   "fallback_validation": {
     "date": "2026-10-18",
     "offline_tests": 111,
