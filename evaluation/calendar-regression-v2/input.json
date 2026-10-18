@@ -1,0 +1,18 @@
+[
+  {
+    "id": "M010",
+    "received_at": "2026-11-09T08:01:00-06:00",
+    "channel": "portal",
+    "from_name": "Grace Park",
+    "from_contact": "grace.park@example.com",
+    "body": "Can I book a follow-up with Dr. Patel next week, ideally Tuesday morning?"
+  },
+  {
+    "id": "M034",
+    "received_at": "2026-11-09T10:18:00-06:00",
+    "channel": "portal",
+    "from_name": "Fatima Hassan",
+    "from_contact": "fatima.hassan@example.com",
+    "body": "Please move my annual physical from Monday the 16th to any morning the following week."
+  }
+]

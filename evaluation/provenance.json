@@ -1,12 +1,12 @@
 {
   "audit_date": "2026-10-18",
-  "offline_tests": 119,
-  "source_code_sha256": "270d536ce7e081d04ca7ca6adc5121c11a203edd98505897e9e15e4fea7f3613",
+  "offline_tests": 131,
+  "source_code_sha256": "eecb51894a6db87f7ba5d64e2d4b3de03752cca7a0fdfb9a21e61b8741bd7528",
   "hash_method": "SHA256 over sorted src/**/*.py followed by pyproject.toml and uv.lock; path + NUL + bytes + NUL",
   "benchmark_status": "complete_baseline_with_operational_failures",
   "live_gate_passed": true,
   "submission_ready": false,
-  "blocker": "Baseline booked/rescheduled M010/M034 in the wrong week. Calendar grounding added; fresh live validation pending.",
+  "blocker": "Complete baseline had wrong-week mutations M010/M034. Prompt-only retest still failed M034; host guards added, fresh live validation pending.",
   "pending": [
     "Fresh live calendar regression checks",
     "Fresh 40-case rerun after calendar correction",
@@ -34,12 +34,12 @@
     "blocker": "HTTP 429 classified as daily_quota on first full-batch model request; no billing/provider/model changes made.",
     "cost": "Unknown: rates not configured and rejected request usage not supplied."
   },
-  "source_revision": "024f0d6",
+  "source_revision": "6af7f01",
   "latest_complete_benchmark": "benchmark-v4/provenance.json",
   "current_verification": {
     "command": "uv run --extra dev pytest -q",
-    "tests_passed": 119,
-    "elapsed_seconds": 30.17,
-    "review": "Calendar grounding and operational findings independently reviewed; no Important/Critical code findings. Live interpretation still requires validation."
+    "tests_passed": 131,
+    "elapsed_seconds": 33.81,
+    "review": "Independent review found negative/conflicting week references and typographic negation bypass; fixed with regressions and re-reviewed. No remaining Important/Critical code findings; limited grammar, not general NLP."
   }
 }

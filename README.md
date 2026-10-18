@@ -87,9 +87,9 @@ Emergency classification also applies on later triage calls. If a mutation alrea
 
 ## Validation status
 
-**119 tests pass. The first complete live benchmark processed all 40 messages using Gemini 3.5 Flash-Lite through the configured fallback chain. Submission readiness remains false.**
+**131 tests pass. The first complete live benchmark processed all 40 messages using Gemini 3.5 Flash-Lite through the configured fallback chain. Submission readiness remains false.**
 
-The [baseline report](evaluation/benchmark-v4/evaluation.json) records 95% urgency accuracy, 72.5% exact action sets, 75.5% action precision, 78.7% action recall and all five labelled emergencies escalated. Every reply and trace was reviewed: no labelled prohibited behaviour was observed, but two appointments were moved/booked in the wrong requested week. Those operational failures block readiness even though their action labels match. Calendar grounding has since been added; fresh live validation is in progress.
+The [baseline report](evaluation/benchmark-v4/evaluation.json) records 95% urgency accuracy, 72.5% exact action sets, 75.5% action precision, 78.7% action recall and all five labelled emergencies escalated. Every reply and trace was reviewed: no labelled prohibited behaviour was observed, but two appointments were moved/booked in the wrong requested week. Those operational failures block readiness even though their action labels match. Computed calendar anchors and explicit-week mutation guards have since been added; fresh live validation is in progress. These guards cover a limited English/Spanish grammar and require clarification for negative or competing week references.
 
 The run used 253 model requests and reported 680,049 input / 5,074 output tokens, averaging 75.7 seconds per message. Actual USD cost is unknown; the [documented paid-price equivalent](evaluation/benchmark-v4/cost-context.json) is USD 0.2167 for known usage only. Primary-model quota failures are recorded, not hidden. See [review notes](evaluation/benchmark-v4/safety-review.json) and [provenance](evaluation/benchmark-v4/provenance.json). Earlier partial attempts remain preserved alongside the [successful live refill/emergency gate](evaluation/reliability-smoke-v6/provenance.json).
 

@@ -1,0 +1,64 @@
+{
+  "status": "failed",
+  "provider": "gemini",
+  "model": "gemini-3.8-flash",
+  "fallback_models": [
+    "gemini-2.5-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite"
+  ],
+  "models_attempted": [
+    "gemini-3.8-flash",
+    "gemini-2.5-flash",
+    "gemini-3.5-flash-lite"
+  ],
+  "models_used": [
+    "gemini-3.5-flash-lite"
+  ],
+  "messages": 2,
+  "processed_ids": [
+    "M010",
+    "M034"
+  ],
+  "unprocessed_ids": [],
+  "tokens": {
+    "input_tokens": 54284,
+    "output_tokens": 406
+  },
+  "estimated_cost_usd": null,
+  "cost_basis": "Model fallback attempted; per-model pricing not configured",
+  "errors": [
+    {
+      "id": "M010",
+      "error": "ValueError: Gemini returned no usable text or tool calls"
+    }
+  ],
+  "message_metrics": [
+    {
+      "id": "M010",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 50172.0,
+      "model_calls": 5,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    },
+    {
+      "id": "M034",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 119625.0,
+      "model_calls": 10,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    }
+  ],
+  "usage_complete": false,
+  "state_model": "Shared sequential MCP server; fresh source data at process start"
+}
