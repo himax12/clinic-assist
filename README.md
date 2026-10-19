@@ -84,13 +84,14 @@ Emergency classification also applies on later triage calls. If a mutation alrea
 - Empty searches return real alternatives within the following 28 days. Only a query covering the original requested window establishes unavailability; another search cannot supply consent. Cancellation and rescheduling require a uniquely identified owned booking.
 - Clinical completion records a clinician handoff. Visit-required refills need provider routing plus a real appointment offer, booking or front-desk follow-up. Host recovery preserves partial operations through a hidden tool.
 - Final actions require supporting operation or policy evidence. Replies use constrained templates and emergency locks.
+- Slot searches explain which returned choices the original request authorizes. Repeated identical rejected calls receive corrective feedback and stop after three failures with partial operations preserved.
 - Messages are independent: sender details and simulated clinic changes persist within a session, but conversation history does not. Follow-ups must restate context.
 - Data is synthetic, with a fixed clinic date of **2026-11-09, America/Chicago**. Incoming timestamps must include a timezone.
 - The MCP server trusts its local host. This is not ready for real patient data or public exposure.
 
 ## Validation status
 
-**224 tests pass. The [latest live benchmark](evaluation/benchmark-v11/evaluation.json) saved 40/40 results using Gemini 3.5 Flash-Lite and one fresh sequential MCP session.**
+**237 tests pass. The booking-loop fix is awaiting fresh live validation. The [previous-revision benchmark](evaluation/benchmark-v11/evaluation.json) saved 40/40 results using Gemini 3.5 Flash-Lite and one fresh sequential MCP session.**
 
 Measured across all 40 labels: 95.0% urgency accuracy, 70.0% exact action sets, 77.4% action precision, 87.2% action recall, 95.0% identity accuracy and 87.5% exact intents. Required emergency recall: 100.0%. Processing failures: 1; missing results: 0; observed prohibited behaviours: 0; operational findings: 1. Every saved reply and trace has [explicit review notes](evaluation/benchmark-v11/safety-review.json), including blocked attempts.
 

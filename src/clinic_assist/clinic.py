@@ -247,8 +247,42 @@ class Clinic:
             alternatives=self.find_slots(provider,after.isoformat(),(after+timedelta(days=27)).isoformat(),
                 visit_type,time_from,time_until,min(limit,3))
         return {'slots':slots,'alternatives':alternatives,
+                'completion_guidance': self._search_completion_guidance(slots),
                 'note':'Alternative dates require sender confirmation; do not silently substitute them.' if alternatives else
                     ('No slots found within the requested range or following 28 days; route to front_desk, do not claim an offer.' if not slots else 'Requested-range slots available.')}
+
+    def _search_completion_guidance(self, slots: list[dict]) -> dict:
+        """Explain existing consent checks without executing or choosing an operation."""
+        from .appointment_requests import requested_operation
+        operation = requested_operation(self._context().body)
+        required = {'book':'book_appointment', 'reschedule':'reschedule_appointment'}.get(operation)
+        if required and any(e['message_id'] == self._context().id and e['kind'] == required for e in self.events):
+            return dict(required_tool=None, completed_tool=required, matching_slots=[], confirmation_required=False,
+                        note='The requested operation is already recorded. Finalize with its actual action; do not execute it again.')
+        matching, original = [], None
+        if operation in {'book', 'reschedule'} and self.find_patient()['verified'] and self.urgency in {'routine', 'urgent'}:
+            if operation == 'reschedule':
+                originals = self._matching_originals()
+                if len(originals) != 1:
+                    return dict(required_tool=None, matching_slots=[], confirmation_required=True,
+                                note='Original appointment is ambiguous; obtain clarification.')
+                original = originals[0]
+            for slot in slots:
+                try:
+                    if original and slot['visit_type'] != original['visit_type']:
+                        continue
+                    self._check_requested_week(slot['date'], original['date'] if original else None)
+                    validate_requested_slot(self._context().body, slot, self.data.today, self.data.clinic['providers'],
+                                            operation, original['date'] if original else None)
+                    self._check_search_selection(slot)
+                except ValueError:
+                    continue
+                matching.append(copy.deepcopy(slot))
+        return dict(required_tool={'book':'book_appointment', 'reschedule':'reschedule_appointment'}.get(operation) if matching else None,
+                    matching_slots=matching, appointment_id=original['id'] if original else None,
+                    confirmation_required=not bool(matching),
+                    note='Original request authorizes a matching operation. Choose a matching slot and execute the required tool; an offer alone is incomplete.' if matching else
+                         'These results do not authorize a mutation. Offer options, search the requested selection or obtain clarification; alternatives need confirmation.')
 
     def _search_covers_request(self, provider: str, start_date: str, end_date: str,
                                visit_type: str, time_from: str, time_until: str) -> bool:

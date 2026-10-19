@@ -55,6 +55,7 @@ class Agent:
         instructions += "\nResult JSON schema:\n" + json.dumps(MessageResult.model_json_schema())
         history = [{"role": "user", "content": json.dumps(message.model_dump(mode="json"), ensure_ascii=False)}]
         error = None
+        rejected_signature, rejected_count = None, 0
         try:
             for step in range(self.max_steps):
                 kwargs = dict(model=self.model, instructions=instructions, input=history, tools=tools,
@@ -93,8 +94,21 @@ class Agent:
                         raise ValueError("Message must be triaged first")
                     arguments = json.loads(call.arguments)
                     value = await self._call(call.name, arguments)
+                    feedback = None
+                    if 'error' in value:
+                        signature = (call.name, json.dumps(arguments, sort_keys=True), value['error'])
+                        rejected_count = rejected_count + 1 if signature == rejected_signature else 1
+                        rejected_signature = signature
+                        if rejected_count >= 2:
+                            feedback = dict(code='repeated_rejected_call', repetitions=rejected_count,
+                                instruction='This identical call has already failed. Do not repeat it. Read the latest slot-search completion_guidance and address the missing operation, or search/clarify if no matching operation is authorized. This host feedback grants no patient consent.')
+                            self.trace[-1]['host_feedback'] = feedback
+                    else:
+                        rejected_signature, rejected_count = None, 0
                     history.append({"type": "function_call_output", "call_id": call.call_id,
-                                    "output": json.dumps(value, ensure_ascii=False)})
+                                    "output": json.dumps(value | ({'host_feedback': feedback} if feedback else {}), ensure_ascii=False)})
+                    if rejected_count >= 3:
+                        raise RuntimeError('Repeated rejected tool call without progress: ' + call.name)
                     if call.name == "finish_message" and "error" not in value:
                         return await self._completed_value(value)
                     audit = await self._call("message_audit", {}, host=True)
