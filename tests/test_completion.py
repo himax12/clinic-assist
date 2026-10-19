@@ -11,6 +11,23 @@ from clinic_assist.contracts import Message
 from clinic_assist.data import ClinicData
 from test_agent import LocalMCP, Responses, response, tool, message, final
 
+
+def test_host_recovery_survives_unfinished_visit_policy_and_is_hidden_from_model():
+    async def scenario():
+        api=Responses([
+            response([tool('triage_message',{'urgency':'routine','intents':['refill']})]),
+            response([tool('check_refill_eligibility',{'medication':'metformin'})]),
+            RuntimeError('Offline simulated provider failure'),
+        ])
+        incoming=message('555-0104')|{'from_name':'Thomas Wright','body':'Please refill metformin.'}
+        outcome=await Agent(LocalMCP(),SimpleNamespace(responses=api),'test').process(incoming)
+        assert outcome['error']
+        assert outcome['result']['actions']==['route_to_clinician']
+        assert 'recover_message' in outcome['result']['tool_calls']
+        assert all('recover_message' not in {t['name'] for t in r['tools']} for r in api.requests)
+        assert 'Available options' not in outcome['result']['reply_draft']
+    asyncio.run(scenario())
+
 ROOT = Path(__file__).resolve().parents[1]
 
 

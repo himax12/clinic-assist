@@ -94,6 +94,11 @@ def create_server(data_path: Path) -> FastMCP:
         """Trusted host only: actual bound patient, triage, routes and events. Never offer to LLM."""
         return clinic.audit()
 
+    @server.tool()
+    def recover_message(actions: list[Action]) -> dict:
+        """Trusted host only: retain completed operations and finalize a failed request after human handoff. Never offer to the LLM."""
+        return clinic.finish_message(actions, recovery=True)
+
     return server
 
 

@@ -51,6 +51,8 @@ def test_appointment_following_week_is_relative_to_original_booking():
 ])
 def test_explicit_following_week_rejects_wrong_reschedule_atomically(body):
     clinic=Clinic(ClinicData.load(ROOT/'data'))
+    # Keep the original unambiguous; original-selection ambiguity has separate regressions.
+    clinic.data.appointments=[a for a in clinic.data.appointments if a['id']=='A073']
     clinic.begin_message(dict(id='relative-date',received_at='2026-11-09T10:18:00-06:00',
         channel='portal',from_name='Fatima Hassan',from_contact='fatima.hassan@example.com',body=body))
     clinic.triage('routine',['reschedule'])

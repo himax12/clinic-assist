@@ -6,7 +6,7 @@ from openai import APIConnectionError, APIStatusError
 from .contracts import Message, MessageResult
 from .prompts import SYSTEM
 
-HOST_TOOLS = {"begin_message", "message_audit"}
+HOST_TOOLS = {"begin_message", "message_audit", "recover_message"}
 HIDDEN_TOOLS = HOST_TOOLS | {"draft_reply"}
 MUTATIONS = {"prepare_refill_for_approval", "book_appointment", "cancel_appointment", "reschedule_appointment"}
 
@@ -115,7 +115,8 @@ class Agent:
         audit = await self._call("message_audit", {}, host=True)
         actions = sorted({e["kind"] for e in audit["events"]} & MUTATIONS)
         actions.append("escalate_emergency" if audit["urgency"] == "emergency" else "route_to_clinician")
-        return await self._complete(actions, error)
+        value = await self._call("recover_message", {"actions": actions}, host=True)
+        return await self._completed_value(value, error)
 
     async def _complete(self, actions, error=None):
         value = await self._call("finish_message", {"actions": actions}, host=True)

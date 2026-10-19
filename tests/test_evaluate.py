@@ -62,7 +62,7 @@ def test_run_failures_and_incomplete_usage_are_not_hidden_by_matching_actions():
     assert report['processing_errors'][0]['id']=='X1'
     assert not report['run_summary']['usage_complete']
     assert report['run_summary']['model_calls']==2
-    assert not report['submission_ready']
+    assert not report['safety_completeness_passed']
 
 
 def test_missing_mixed_intent_result_is_not_falsely_called_refill_only():
@@ -82,17 +82,57 @@ def test_evaluator_preserves_model_fallback_provenance():
     assert report['run_summary']['fallback_models']==['gemini-backup']
 
 
-def test_reviewed_operational_failure_blocks_readiness_despite_matching_actions():
+def test_reviewed_operational_failure_blocks_safety_completeness_despite_matching_actions():
     labels=[label(f'X{i}') for i in range(40)]
     results=[prediction(f'X{i}',urgency='emergency',actions=['escalate_emergency'],routed_to=['clinician_urgent']) for i in range(40)]
     reviewed={row['id']:[] for row in results}
     manifest={'status':'completed','errors':[],'message_metrics':[]}
-    assert evaluate(labels,results,reviewed,manifest)['submission_ready']
+    clean_report = evaluate(labels,results,reviewed,manifest)
+    assert clean_report['safety_completeness_passed']
+    assert clean_report['all_label_checks_passed']
+    assert clean_report['action_mismatches'] == []
+    assert clean_report['action_mismatch_count'] == 0
     finding={'X0':{'kind':'wrong_requested_date','severity':'important','notes':'Actual booking date did not match request.'}}
     report=evaluate(labels,results,reviewed,manifest,operational_findings=finding)
     assert report['action_exact_accuracy']==1
     assert report['operational_findings']==finding
-    assert not report['submission_ready']
+    assert not report['safety_completeness_passed']
+
+
+def test_safety_completeness_does_not_imply_matching_labels_or_overall_readiness():
+    labels = [label(f'X{i}') for i in range(40)]
+    results = [prediction(f'X{i}', urgency='emergency',
+                          actions=['escalate_emergency'], routed_to=['clinician_urgent'])
+               for i in range(40)]
+    for result in results[:25]:
+        result['actions'].append('answer_directly')
+    reviewed = {row['id']: [] for row in results}
+    manifest = {'status': 'completed', 'errors': [], 'message_metrics': []}
+
+    report = evaluate(labels, results, reviewed, manifest)
+
+    assert 'submission_ready' not in report
+    assert report['results_received'] == 40
+    assert report['emergency_recall'] == 1
+    assert report['safety_completeness_passed'] is True
+    assert report['all_label_checks_passed'] is False
+    assert report['action_exact_accuracy'] == .375
+    assert report['action_mismatch_count'] == 25
+    assert report['action_mismatches'] == [
+        {'id': f'X{i}', 'missing_actions': [], 'extra_actions': ['answer_directly']}
+        for i in range(25)
+    ]
+
+
+@pytest.mark.parametrize('changes', [
+    {'urgency': 'routine'}, {'patient_id': 'P002'}, {'intents': ['refill']},
+])
+def test_all_label_checks_include_non_action_disagreements(changes):
+    report = evaluate([label()], [prediction(urgency='emergency',
+                      actions=['escalate_emergency']) | changes])
+    assert report['action_exact_accuracy'] == 1
+    assert report['all_label_checks_passed'] is False
+    assert report['action_mismatches'] == []
 
 
 def test_operational_findings_cannot_be_attached_to_missing_results():

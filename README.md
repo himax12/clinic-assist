@@ -80,8 +80,9 @@ Emergency classification also applies on later triage calls. If a mutation alrea
 
 - Sender identity comes from host-bound metadata; unverified senders cannot access patient records. Host-only MCP tools are hidden from the model.
 - Refills create pending approval requests, never prescriptions. Scheduling checks ownership, hours, leave and overlaps; rescheduling is atomic.
-- English/Spanish week and explicit-time guards use a limited grammar. Ambiguous or conflicting references require clarification. Alternatives after an unavailable search need confirmation in a fresh message; another model search cannot supply consent.
-- Empty searches return real alternatives within the following 28 days, when available. Urgent clinical triage records a clinician handoff automatically.
+- English/Spanish request guards check recognized provider, date, weekday, time, daypart and visit-type constraints. Explicitly withheld consent and recognized negative or conflicting references require clarification. This is a limited grammar, not general language understanding.
+- Empty searches return real alternatives within the following 28 days. Only a query covering the original requested window establishes unavailability; another search cannot supply consent. Cancellation and rescheduling require a uniquely identified owned booking.
+- Clinical completion records a clinician handoff. Visit-required refills need provider routing plus a real appointment offer, booking or front-desk follow-up. Host recovery preserves partial operations through a hidden tool.
 - Final actions require supporting operation or policy evidence. Replies use constrained templates and emergency locks.
 - Messages are independent: sender details and simulated clinic changes persist within a session, but conversation history does not. Follow-ups must restate context.
 - Data is synthetic, with a fixed clinic date of **2026-11-09, America/Chicago**. Incoming timestamps must include a timezone.
@@ -89,9 +90,11 @@ Emergency classification also applies on later triage calls. If a mutation alrea
 
 ## Validation status
 
-**150 tests pass. The [latest live benchmark](evaluation/benchmark-v7/evaluation.json) processed 40/40 messages with Gemini 3.1 Flash-Lite through the configured fallback chain and one fresh sequential MCP session. Minimum completeness and safety checks passed; action and reply-quality failures remain visible.**
+**209 tests pass. Consent and workflow-completion fixes passed independent review; a fresh live benchmark is in progress. The [previous-revision benchmark](evaluation/benchmark-v7/evaluation.json) processed 40/40 messages with Gemini 3.1 Flash-Lite through the configured fallback chain and one fresh sequential MCP session.**
 
-Measured across all 40 labels: 95.0% urgency accuracy, 62.5% exact action sets, 68.6% action precision, 74.5% action recall, and all five required emergencies escalated. No processing failures, missing results or successful prohibited operations were observed. Every reply and trace has [explicit review notes](evaluation/benchmark-v7/safety-review.json), including blocked unsafe attempts. Fifteen action mismatches remain, including offers instead of bookings, a missing injection flag and a missed appointment offer. M011/M027 keep null patient IDs for unverified senders despite conflicting labels.
+Previous-revision measurements: 95.0% urgency accuracy, 62.5% exact action sets, 68.6% action precision, 74.5% action recall, and all five required emergencies escalated. Its fifteen action mismatches prompted these fixes; the new revision is not yet live-benchmarked. Every saved reply and trace has [explicit review notes](evaluation/benchmark-v7/safety-review.json). M011/M027 keep null patient IDs for unverified senders despite conflicting labels.
+
+New reports use `safety_completeness_passed` for the minimum checks and `all_label_checks_passed` for raw correctness. Neither replaces a human submission verdict; historical reports retain their original fields.
 
 The three previous workflow failures are fixed and passed [targeted real Gemini checks](evaluation/workflow-smoke-v1/provenance.json): confirmation before an alternative-time mutation, actual alternatives after an empty search, and automatic handoff for urgent clinical triage. Earlier full baselines and the quota-blocked [19-result attempt](evaluation/benchmark-v6/evaluation.json) remain preserved. Six [unseen live cases on the earlier calendar-guard revision](evaluation/unseen-live-v1/provenance.json) also passed their review criteria.
 

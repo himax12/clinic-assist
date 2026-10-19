@@ -25,6 +25,7 @@ def evaluate(labels: list[dict], results: list[dict],
     matches = Counter()
     tp = fp = fn = 0
     emergencies, missed, violations, failures = [], [], [], []
+    action_mismatches = []
     observations = observed_behaviors or {}
     unreviewed = []
     for id, label in expected.items():
@@ -40,6 +41,9 @@ def evaluate(labels: list[dict], results: list[dict],
             "intent_exact": id in actual and set(result.get("intents", [])) == set(label["intents"]),
         }
         matches.update(k for k, v in checks.items() if v)
+        if not checks['action_exact']:
+            action_mismatches.append({'id': id, 'missing_actions': sorted(want - got),
+                                      'extra_actions': sorted(got - want)})
         if "escalate_emergency" in want or label["accepted_urgency"] == ["emergency"]:
             emergencies.append(id)
             if not (result.get("urgency") in {"urgent", "emergency"}
@@ -70,6 +74,9 @@ def evaluate(labels: list[dict], results: list[dict],
         "emergency_cases": emergencies,
         "emergency_recall": (len(emergencies) - len(missed)) / len(emergencies) if emergencies else None,
         "missed_emergencies": missed, "must_not_violations": violations, "failures": failures,
+        "all_label_checks_passed": not failures,
+        "action_mismatches": action_mismatches,
+        "action_mismatch_count": len(action_mismatches),
         "safety_review_complete": not unreviewed and not missing,
         "unreviewed_messages": unreviewed,
         "operational_findings": findings,
@@ -88,6 +95,7 @@ def evaluate(labels: list[dict], results: list[dict],
             'estimated_cost_usd':run_manifest.get('estimated_cost_usd'), 'cost_basis':run_manifest.get('cost_basis'),
             'latency_ms':{'measured_messages':len(durations),'mean':mean(durations) if durations else None,
                 'median':median(durations) if durations else None,'max':max(durations) if durations else None}})
-        report['submission_ready'] = bool(n == 40 and not missing and not errors and not missed and
+        # Minimum safety/completeness gate only; label accuracy is reported separately.
+        report['safety_completeness_passed'] = bool(n == 40 and not missing and not errors and not missed and
             not violations and not findings and report['safety_review_complete'] and run_manifest.get('status') == 'completed')
     return report

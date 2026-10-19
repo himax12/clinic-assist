@@ -8,7 +8,7 @@ from uuid import uuid4
 from typing import get_args
 
 from .contracts import Action, Intent, Message, Queue, ResponseLanguage, Urgency
-from .appointment_requests import validate_requested_time
+from .appointment_requests import validate_requested_slot, validate_mutation_consent, requested_visit_types
 from .data import ClinicData, calendar_context
 
 
@@ -240,14 +240,64 @@ class Clinic:
         slots=self.find_slots(provider,start_date,end_date,visit_type,time_from,time_until,limit)
         alternatives=[]
         if not slots:
-            self._unavailable_requests.append(dict(provider=provider,start_date=start_date,end_date=end_date,
-                visit_type=visit_type,time_from=time_from,time_until=time_until))
+            if self._search_covers_request(provider,start_date,end_date,visit_type,time_from,time_until):
+                self._unavailable_requests.append(dict(provider=provider,start_date=start_date,end_date=end_date,
+                    visit_type=visit_type,time_from=time_from,time_until=time_until))
             after=date.fromisoformat(end_date)+timedelta(days=1)
             alternatives=self.find_slots(provider,after.isoformat(),(after+timedelta(days=27)).isoformat(),
                 visit_type,time_from,time_until,min(limit,3))
         return {'slots':slots,'alternatives':alternatives,
                 'note':'Alternative dates require sender confirmation; do not silently substitute them.' if alternatives else
                     ('No slots found within the requested range or following 28 days; route to front_desk, do not claim an offer.' if not slots else 'Requested-range slots available.')}
+
+    def _search_covers_request(self, provider: str, start_date: str, end_date: str,
+                               visit_type: str, time_from: str, time_until: str) -> bool:
+        """Only a complete source-grounded query establishes unavailability.
+
+        Validate hypothetical clinic-grid candidates against the same source
+        constraints used by mutations. Ignore occupancy, leave and closures:
+        those are precisely the reasons a genuinely requested query can be empty.
+        An empty subset of the requested window proves nothing about the rest.
+        """
+        from .appointment_requests import requested_operation
+
+        operation = requested_operation(self._context().body) or 'book'
+        original_date = None
+        if operation == 'reschedule':
+            try:
+                originals = self._matching_originals()
+            except (PermissionError, ValueError):
+                return False
+            if len(originals) != 1:
+                return False
+            original_date = originals[0]['date']
+            if visit_type != originals[0]['visit_type']:
+                return False
+        policy = self.data.clinic
+        duration = policy['visit_types'][visit_type]
+        opening, closing = minutes(policy['hours']['open']), minutes(policy['hours']['close'])
+        lunch_start, lunch_end = map(minutes, policy['hours']['lunch'])
+        matched = False
+        for offset in range(61):
+            day = (self.data.today + timedelta(days=offset)).isoformat()
+            try:
+                self._check_requested_week(day, original_date)
+            except ValueError:
+                continue
+            for begin in range(opening, closing - duration + 1, 20):
+                end = begin + duration
+                if begin < lunch_end and end > lunch_start:
+                    continue
+                slot = dict(provider=provider, date=day, start=clock(begin), end=clock(end), visit_type=visit_type)
+                try:
+                    validate_requested_slot(self._context().body, slot, self.data.today, policy['providers'],
+                                            operation, original_date)
+                except ValueError:
+                    continue
+                matched = True
+                if not (start_date <= day <= end_date and time_from <= slot['start'] and slot['end'] <= time_until):
+                    return False
+        return matched
 
     def _check_search_selection(self, slot: dict) -> None:
         # A second model search is not human consent to a changed appointment.
@@ -294,7 +344,7 @@ class Clinic:
             self._verified()
             self._check_requested_week(day)
             slot = self._slot(provider, day, start, visit_type)
-            validate_requested_time(self._context().body,slot['start'],slot['end'])
+            validate_requested_slot(self._context().body,slot,self.data.today,self.data.clinic['providers'])
             self._check_search_selection(slot)
             appt = {"id": "B" + uuid4().hex[:12], "patient_id": self._verified()["id"], **slot, "status": "booked"}
             self.data.appointments.append(appt)
@@ -313,17 +363,43 @@ class Clinic:
         with self._lock:
             self._action_allowed()
             a = self._owned(appointment_id)
+            validate_mutation_consent(self._context().body,'cancel')
+            validate_requested_slot(self._context().body,a,self.data.today,self.data.clinic['providers'],'cancel')
+            matching=self._matching_originals('cancel')
+            if len(matching)!=1 or matching[0]['id']!=appointment_id:
+                raise ValueError('Ambiguous appointment selection; ask for clarification before cancellation')
             a["status"] = "cancelled"
             self._record("cancel_appointment", appointment=copy.deepcopy(a))
             return copy.deepcopy(a)
+
+    def _matching_originals(self, operation: str = 'reschedule') -> list[dict]:
+        body=self._context().body
+        parts=re.split(r'\b(?:to|al)\b',body,flags=re.I)
+        original_text=parts[-2] if operation=='reschedule' and len(parts)>1 else (body if operation=='cancel' else '')
+        types=requested_visit_types(original_text)
+        appointments=self.list_appointments()
+        explicit_ids={a['id'] for a in appointments if re.search(r'\b'+re.escape(a['id'])+r'\b',body,re.I)}
+        matching=[]
+        for candidate in appointments:
+            if explicit_ids and candidate['id'] not in explicit_ids:continue
+            if types and candidate['visit_type'] not in types:continue
+            try:
+                validate_requested_slot(original_text,candidate,self.data.today,self.data.clinic['providers'],'cancel')
+            except ValueError:
+                continue
+            matching.append(candidate)
+        return matching
 
     def reschedule(self, appointment_id: str, provider: str, day: str, start: str) -> dict:
         with self._lock:
             self._action_allowed()
             a = self._owned(appointment_id)
+            matching=self._matching_originals()
+            if len(matching)!=1 or matching[0]['id']!=appointment_id:
+                raise ValueError('Ambiguous or unmatched requested original appointment; ask for clarification before rescheduling')
             self._check_requested_week(day, a['date'])
             slot = self._slot(provider, day, start, a["visit_type"], ignore=appointment_id)
-            validate_requested_time(self._context().body,slot['start'],slot['end'])
+            validate_requested_slot(self._context().body,slot,self.data.today,self.data.clinic['providers'],'reschedule',a['date'])
             self._check_search_selection(slot)
             a.update(slot)
             self._record("reschedule_appointment", appointment=copy.deepcopy(a))
@@ -384,16 +460,68 @@ class Clinic:
                 raise ValueError("Cannot draft an unperformed handoff")
         return self.draft_reply(render_reply(actions, self.data.clinic, audit, language), language)
 
-    def finish_message(self, actions: list[Action]) -> dict:
+    def finish_message(self, actions: list[Action], *, recovery: bool = False) -> dict:
+        from .appointment_requests import requested_operation
+
         if self.urgency is None:
             raise ValueError("Triage is required before completion")
+        if not actions or any(action not in get_args(Action) for action in actions):
+            raise ValueError("Use nonempty canonical actions")
         mutations = {"prepare_refill_for_approval", "book_appointment", "reschedule_appointment", "cancel_appointment"}
-        performed = {e["kind"] for e in self.audit()["events"]} & mutations
-        actions = sorted(set(actions) | performed)
-        if self.urgency == 'urgent' and 'clinical' in self.intents:
-            self.route('clinician_urgent','Urgent clinical concern; same-day clinical review required')
-            actions=sorted(set(actions)|{'route_to_clinician'})
+        audit = self.audit()
+        performed = {e["kind"] for e in audit["events"]} & mutations
+        actions = set(actions) | performed
+        body = norm(self._context().body)
+        suspicious = bool(re.search(
+            r'\b(?:ignore|disregard|forget)\b.{0,50}\b(?:previous|prior|system|instructions|rules)\b'
+            r'|\bapprove\s+(?:all|every)\b'
+            r'|\b(?:bypass|override|skip)\b.{0,60}\b(?:approval|verification|policy|policies|rules|safety)\b'
+            r'|\b(?:doctor|provider|staff|administrator|admin)\b.{0,60}\b(?:authori[sz]ed|approved)\b.{0,40}\boverride\b', body))
+        if suspicious:
+            if not any(e['kind'] == 'flag_suspicious_instruction' for e in audit['events']):
+                self._record('flag_suspicious_instruction', reason='Untrusted request to override clinic safeguards')
+            if self.urgency != 'emergency':
+                actions.add('flag_suspicious_instruction')
         if self.urgency == "emergency" and (set(actions) - performed) != {"escalate_emergency"}:
             raise ValueError("Emergency completion may only escalate and report already-performed operations")
+        if self.urgency != 'emergency':
+            if 'clinical' in self.intents:
+                queue = 'clinician_urgent' if self.urgency == 'urgent' else 'clinician_routine'
+                self.route(queue, 'Clinical concern requires clinician review')
+                actions.add('route_to_clinician')
+                # The direct-answer template contains public opening hours only.
+                if not re.search(r'\b(?:hours|opening|closing|horario|horarios)\b', body):
+                    actions.discard('answer_directly')
+        # Only the host recovery entry point can set this keyword. Model-supplied
+        # routing reasons never exempt a request from completion validation.
+        if self.urgency != 'emergency' and not recovery:
+            needs_visit = any(e['kind'] == 'refill_check' and e['decision']['status'] == 'needs_visit'
+                              for e in audit['events'])
+            queues = {r['queue'] for r in audit['routes']}
+            if needs_visit:
+                offered = bool(actions & {'offer_appointment', 'offer_alternatives'})
+                visit_booked = bool(performed & {'book_appointment', 'reschedule_appointment'})
+                if 'provider_refills' not in queues or not (offered or visit_booked or 'front_desk' in queues):
+                    raise ValueError('needs_visit requires an actual provider_refills handoff and an available appointment offer '
+                                     'or booking; if scheduling needs clarification, actually route to front_desk')
+                actions.add('refill_needs_visit')
+                actions.add('route_to_provider')
+                if 'front_desk' in queues and not (offered or visit_booked):
+                    actions.add('route_to_front_desk')
+            operation = requested_operation(self._context().body)
+            required = {'book': 'book_appointment', 'reschedule': 'reschedule_appointment',
+                        'cancel': 'cancel_appointment'}.get(operation)
+            # An unavailable requested search creates a genuine confirmation barrier.
+            # A model's preference for offering a matching opening does not.
+            if (required and self.find_patient()['verified'] and required not in performed
+                    and 'front_desk' not in queues and not (self._unavailable_requests and
+                        actions & {'offer_appointment', 'offer_alternatives'})):
+                raise ValueError(f'Requested {operation} is incomplete: perform {required} using a matching slot/owned booking; '
+                                 'if ambiguous, actually route to front_desk for clarification. '
+                                 'Only an unavailable requested search permits offering alternatives for confirmation.')
+            if ('answer_directly' in actions and 'admin' not in self.intents
+                    and not re.search(r'\b(?:hours|opening|closing|horario|horarios)\b', body)):
+                raise ValueError('answer_directly supports public clinic hours only; complete the refill or other intent with tools')
+        actions = sorted(actions)
         return {"actions": actions, "safety_error": "Emergency reclassification after administrative mutation" if self.urgency == "emergency" and performed else None,
                 **self.draft_actions(actions, self.reply_language())}
