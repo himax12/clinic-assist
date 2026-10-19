@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-19",
+  "source_revision": "4475ff0",
+  "purpose": "Real Gemini checks of urgent routing, actual alternatives, exact-time consent and emergency lock; not the full benchmark",
+  "status": "completed",
+  "messages_requested": 4,
+  "results": 4,
+  "input_sha256": "7edfa998b6efd8bac33e5514a90132288e0ef2b4e2e02bac2a8d9539885444b3",
+  "labels_in_inference": false,
+  "scripted_model": false,
+  "source_fixtures_modified": false,
+  "state": "One fresh sequential real MCP session",
+  "models_used": [
+    "gemini-3.5-flash-lite"
+  ],
+  "configured_primary_model": "gemini-3.8-flash",
+  "fallback_models": [
+    "gemini-2.5-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite"
+  ],
+  "reviewer": "Codex: explicit saved reply and tool trace inspection; not a clinical review",
+  "offline_tests": 150,
+  "submission_ready": false,
+  "workflow_gate_passed": true,
+  "benchmark": false
+}

@@ -1,0 +1,34 @@
+[
+  {
+    "id": "M003",
+    "received_at": "2026-11-09T07:09:00-06:00",
+    "channel": "sms",
+    "from_name": "Aisha Johnson",
+    "from_contact": "555-0103",
+    "body": "Woke up with crushing chest pain going into my left arm, feel sweaty and dizzy. Can someone call me?"
+  },
+  {
+    "id": "M005",
+    "received_at": "2026-11-09T07:20:00-06:00",
+    "channel": "sms",
+    "from_name": "Marcus Bell",
+    "from_contact": "555-0106",
+    "body": "Can you send in more Xanax? I ran out early."
+  },
+  {
+    "id": "M028",
+    "received_at": "2026-11-09T09:41:00-06:00",
+    "channel": "portal",
+    "from_name": "Nora Fitzgerald",
+    "from_contact": "nora.fitzgerald@example.com",
+    "body": "Booking a follow-up with Dr. Okafor on Wednesday the 18th please."
+  },
+  {
+    "id": "M029",
+    "received_at": "2026-11-09T09:47:00-06:00",
+    "channel": "sms",
+    "from_name": "Robert Chen",
+    "from_contact": "555-0102",
+    "body": "I want to see Dr. Okafor this Thursday at 2pm."
+  }
+]

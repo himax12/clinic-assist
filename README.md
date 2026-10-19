@@ -87,7 +87,9 @@ Emergency classification also applies on later triage calls. If a mutation alrea
 
 ## Validation status
 
-**131 tests pass. The [latest live benchmark](evaluation/benchmark-v5/evaluation.json) processed all 40 original messages through one fresh sequential MCP session using Gemini 3.5 Flash-Lite via the configured fallback chain. Submission readiness remains false.**
+**150 tests pass. The [latest complete benchmark of the previous revision](evaluation/benchmark-v5/evaluation.json) processed all 40 original messages through one fresh sequential MCP session using Gemini 3.5 Flash-Lite via the configured fallback chain. Submission readiness remains false.**
+
+The three operational failures have since been fixed and passed a [fresh live workflow check](evaluation/workflow-smoke-v1/provenance.json); the new full benchmark is in progress.
 
 Measured: 97.5% urgency accuracy, 75.0% exact action sets, 77.1% action precision, 78.7% action recall, and all five labelled emergencies escalated. Every reply and trace was reviewed: no labelled prohibited behaviour was observed. Three operational findings remain: urgent triage without matching clinical routing, missing actual alternatives, and booking an alternative time without confirmation. See [review notes](evaluation/benchmark-v5/safety-review.json) and [findings](evaluation/benchmark-v5/operational-findings.json).
 
