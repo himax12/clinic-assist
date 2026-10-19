@@ -188,3 +188,12 @@ def test_time_without_space_after_at_is_still_enforced():
     with pytest.raises(ValueError,match='requested time'):
         c.book('KIM','2026-11-12','14:20','follow_up')
     assert c.book('KIM','2026-11-12','14:00','follow_up')['start']=='14:00'
+
+
+@pytest.mark.parametrize('body', ['Please book today or tomorrow.', 'Necesito una cita hoy o mañana.'])
+@pytest.mark.parametrize('day', ['2026-11-09', '2026-11-10'])
+def test_relative_date_alternatives_accept_either_requested_day(body, day):
+    c = bound(body)
+    assert c.book('KIM', day, '11:00', 'follow_up')['date'] == day
+    with pytest.raises(ValueError, match='requested'):
+        c.book('KIM', '2026-11-11', '11:00', 'follow_up')

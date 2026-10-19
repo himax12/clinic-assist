@@ -66,6 +66,40 @@ def test_requested_booking_cannot_finish_as_available_options():
         clinic.finish_message(['offer_appointment'])
 
 
+@pytest.mark.parametrize('body', [
+    'Please book a physical with Patel next week.',
+    'Necesito una cita para mi chequeo anual la próxima semana con Patel.',
+])
+@pytest.mark.parametrize('searched', [False, True])
+def test_generic_front_desk_route_cannot_replace_available_requested_booking(body, searched):
+    clinic = inbox(body, ['schedule'])
+    if searched:
+        assert clinic.search_slots('PATEL', '2026-11-16', '2026-11-20', 'annual_physical')['slots']
+    clinic.route('front_desk', 'Offered options for patient confirmation')
+    with pytest.raises(ValueError, match='book'):
+        clinic.finish_message(['route_to_front_desk'])
+
+
+@pytest.mark.parametrize('operation', ['cancel', 'reschedule'])
+def test_generic_handoff_cannot_replace_unambiguous_owned_operation(operation):
+    body = 'Cancel appointment ONLY tomorrow.' if operation == 'cancel' else 'Move appointment ONLY tomorrow to November 13 afternoon.'
+    clinic = inbox(body, [operation])
+    clinic.data.appointments = [dict(id='ONLY', patient_id='P002', provider='KIM', date='2026-11-10',
+        start='09:00', end='09:20', visit_type='follow_up', status='booked')]
+    clinic.route('front_desk', 'Patient requested this change')
+    with pytest.raises(ValueError, match=operation):
+        clinic.finish_message(['route_to_front_desk'])
+
+
+def test_ambiguous_owned_operation_still_permits_actual_clarification_handoff():
+    clinic = inbox('Cancel my appointment tomorrow.', ['cancel'])
+    clinic.data.appointments = [dict(id=id, patient_id='P002', provider='KIM', date='2026-11-10',
+        start=start, end=end, visit_type='follow_up', status='booked')
+        for id, start, end in [('one', '09:00', '09:20'), ('two', '10:00', '10:20')]]
+    clinic.route('front_desk', 'Two owned bookings match; ask which appointment')
+    assert clinic.finish_message(['route_to_front_desk'])['actions'] == ['route_to_front_desk']
+
+
 def test_unavailable_requested_booking_can_finish_with_real_alternatives():
     clinic = inbox('Please book an appointment on Sunday.', ['schedule'])
     clinic.search_slots('OKAFOR', '2026-11-15', '2026-11-15', 'follow_up')

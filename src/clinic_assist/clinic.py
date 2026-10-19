@@ -460,6 +460,42 @@ class Clinic:
                 raise ValueError("Cannot draft an unperformed handoff")
         return self.draft_reply(render_reply(actions, self.data.clinic, audit, language), language)
 
+    def _requested_operation_available(self, operation: str) -> bool:
+        """Read-only completion check; a routing reason is not ambiguity evidence.
+
+        Reuse mutation constraints over the existing 60-day search horizon. This
+        never executes a mutation or chooses a slot for the model. A genuinely
+        ambiguous original or source constraint can still require staff help.
+        """
+        original = None
+        if operation in {'cancel', 'reschedule'}:
+            originals = self._matching_originals(operation)
+            if len(originals) != 1:
+                return False
+            original = originals[0]
+            if operation == 'cancel':
+                return True
+        types = {original['visit_type']} if original else (requested_visit_types(self._context().body) or set(self.data.clinic['visit_types']))
+        for offset in range(61):
+            day = (self.data.today + timedelta(days=offset)).isoformat()
+            try:
+                self._check_requested_week(day, original['date'] if original else None)
+            except ValueError:
+                continue
+            for provider in self.data.clinic['providers']:
+                for visit_type in types:
+                    for begin in range(9 * 60, 17 * 60, 20):
+                        try:
+                            slot = self._slot(provider['id'], day, clock(begin), visit_type,
+                                              ignore=original['id'] if original else None)
+                            validate_requested_slot(self._context().body, slot, self.data.today,
+                                self.data.clinic['providers'], operation, original['date'] if original else None)
+                            self._check_search_selection(slot)
+                        except ValueError:
+                            continue
+                        return True
+        return False
+
     def finish_message(self, actions: list[Action], *, recovery: bool = False) -> dict:
         from .appointment_requests import requested_operation
 
@@ -514,10 +550,12 @@ class Clinic:
             # An unavailable requested search creates a genuine confirmation barrier.
             # A model's preference for offering a matching opening does not.
             if (required and self.find_patient()['verified'] and required not in performed
-                    and 'front_desk' not in queues and not (self._unavailable_requests and
+                    and ('front_desk' not in queues or self._requested_operation_available(operation))
+                    and not (self._unavailable_requests and
                         actions & {'offer_appointment', 'offer_alternatives'})):
                 raise ValueError(f'Requested {operation} is incomplete: perform {required} using a matching slot/owned booking; '
-                                 'if ambiguous, actually route to front_desk for clarification. '
+                                 'A generic front_desk handoff cannot replace an available matching operation; '
+                                 'only genuine ambiguity or unavailability permits clarification. '
                                  'Only an unavailable requested search permits offering alternatives for confirmation.')
             if ('answer_directly' in actions and 'admin' not in self.intents
                     and not re.search(r'\b(?:hours|opening|closing|horario|horarios)\b', body)):

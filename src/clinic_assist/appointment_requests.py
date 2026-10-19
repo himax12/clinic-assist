@@ -103,7 +103,11 @@ def validate_requested_slot(body: str, slot: dict, today: date, providers: list[
         raise ValueError('Slot does not match the requested date; new confirmation or clarification required')
     if not explicit:
         relative_text=text.replace('por la manana','')
-        if re.search(r'\b(?:tomorrow|manana)\b',relative_text):
+        either_day = re.search(r'\b(?:(?:today|hoy)\s+(?:or|o)\s+(?:tomorrow|manana)|(?:tomorrow|manana)\s+(?:or|o)\s+(?:today|hoy))\b', relative_text)
+        if either_day:
+            if chosen not in {today, today + timedelta(days=1)}:
+                raise ValueError('Slot does not match requested today or tomorrow')
+        elif re.search(r'\b(?:tomorrow|manana)\b',relative_text):
             if chosen!=today+timedelta(days=1):raise ValueError('Slot does not match requested tomorrow')
         elif re.search(r'\b(?:today|hoy)\b',text) and chosen!=today:
             raise ValueError('Slot does not match requested today')

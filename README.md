@@ -90,9 +90,9 @@ Emergency classification also applies on later triage calls. If a mutation alrea
 
 ## Validation status
 
-**209 tests pass. Consent and workflow-completion fixes passed independent review; a fresh live benchmark is in progress. The [previous-revision benchmark](evaluation/benchmark-v7/evaluation.json) processed 40/40 messages with Gemini 3.1 Flash-Lite through the configured fallback chain and one fresh sequential MCP session.**
+**220 tests pass. Consent and workflow-completion fixes passed independent review; fresh live validation is in progress. The [previous-revision benchmark](evaluation/benchmark-v7/evaluation.json) processed 40/40 messages with Gemini 3.1 Flash-Lite through the configured fallback chain and one fresh sequential MCP session.**
 
-Previous-revision measurements: 95.0% urgency accuracy, 62.5% exact action sets, 68.6% action precision, 74.5% action recall, and all five required emergencies escalated. Its fifteen action mismatches prompted these fixes; the new revision is not yet live-benchmarked. Every saved reply and trace has [explicit review notes](evaluation/benchmark-v7/safety-review.json). M011/M027 keep null patient IDs for unverified senders despite conflicting labels.
+Previous-revision measurements: 95.0% urgency accuracy, 62.5% exact action sets, 68.6% action precision, 74.5% action recall, and all five required emergencies escalated. A later [17-result attempt](evaluation/benchmark-v9/evaluation.json) exposed an incomplete-booking handoff bypass and missed emergency guidance; it was interrupted and retained. Those findings prompted new regressions and clearer triage guidance; the latest source is awaiting live validation. Every saved reply and trace has explicit review notes. M011/M027 keep null patient IDs for unverified senders despite conflicting labels.
 
 New reports use `safety_completeness_passed` for the minimum checks and `all_label_checks_passed` for raw correctness. Neither replaces a human submission verdict; historical reports retain their original fields.
 
