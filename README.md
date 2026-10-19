@@ -102,6 +102,8 @@ A fresh [unseen live rehearsal](evaluation/unseen-live-v3/provenance.json) met 6
 
 The full report is not a passing run: remaining processing and action failures are listed explicitly. M016 reached the tool-iteration limit without completing its requested booking.
 
+A [targeted follow-up](evaluation/workflow-smoke-v3/provenance.json) completed that booking and the emergency check using the configured Gemini 2.5 Flash fallback after 3.1 Flash-Lite returned HTTP 503. This does not replace the full benchmark or remove its failure.
+
 ## Tests and batch runs
 
 ```powershell

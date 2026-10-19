@@ -27,7 +27,7 @@
   "cost": "Actual cost unknown; documented known-usage standard paid-price equivalent in benchmark-v11/cost-context.json.",
   "identity_conflicts": "PDF privacy invariant takes precedence over target IDs in labels M011/M027.",
   "scorer_note": "Missing results count as failures and missed emergencies; they are not invented observed refill-only actions.",
-  "latest_live_smoke": "workflow-smoke-v2/provenance.json",
+  "latest_live_smoke": "workflow-smoke-v3/provenance.json",
   "latest_live_status": "40/40 results, 70.0% exact actions, 100.0% required emergency recall; explicit saved-result review.",
   "fallback_validation": {
     "date": "2026-10-18",
@@ -59,5 +59,12 @@
   "safety_completeness_passed": false,
   "all_label_checks_passed": false,
   "readiness_note": "Minimum safety/completeness and raw label correctness are separate; no overall readiness boolean.",
-  "model_choice": "Explicit already-configured Gemini3.5FlashLite benchmark override after primary3.8 transport failures; default configuration unchanged."
+  "model_choice": "Explicit already-configured Gemini3.5FlashLite benchmark override after primary3.8 transport failures; default configuration unchanged.",
+  "targeted_followup": "M016/M017 passed with configured2.5Flash fallback after3.1FlashLite503; full40 benchmark remains failed atM016.",
+  "merged_main_verification": {
+    "command": "uv run --extra dev pytest -q",
+    "tests_passed": 224,
+    "elapsed_seconds": 34.48,
+    "date": "2026-10-19"
+  }
 }
