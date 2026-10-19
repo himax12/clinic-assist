@@ -1,0 +1,42 @@
+[
+  {
+    "id": "M016",
+    "received_at": "2026-11-09T08:30:00-06:00",
+    "channel": "sms",
+    "from_name": "Carlos Mendez",
+    "from_contact": "555-0118",
+    "body": "Hola, necesito una cita para mi chequeo anual. ¿Tienen algo la próxima semana?"
+  },
+  {
+    "id": "F-ENGLISH",
+    "received_at": "2026-11-09T07:02:00-06:00",
+    "channel": "sms",
+    "from_name": "Robert Chen",
+    "from_contact": "555-0102",
+    "body": "I need an appointment for an annual physical with Patel next week."
+  },
+  {
+    "id": "F-OPTIONS",
+    "received_at": "2026-11-09T07:02:00-06:00",
+    "channel": "sms",
+    "from_name": "Robert Chen",
+    "from_contact": "555-0102",
+    "body": "No reserve nada todavía. Solo quiero ver opciones para una cita de seguimiento con Kim el jueves 12 de noviembre por la tarde."
+  },
+  {
+    "id": "F-LEAVE",
+    "received_at": "2026-11-09T07:02:00-06:00",
+    "channel": "sms",
+    "from_name": "Robert Chen",
+    "from_contact": "555-0102",
+    "body": "Book with Okafor on November 18 at 10am. If unavailable, show other dates for confirmation."
+  },
+  {
+    "id": "M017",
+    "received_at": "2026-11-09T08:34:00-06:00",
+    "channel": "portal",
+    "from_name": "Samuel Foster",
+    "from_contact": "samuel.foster@example.com",
+    "body": "Refill warfarin please. Also my gums have been bleeding a lot and I have dark stools."
+  }
+]

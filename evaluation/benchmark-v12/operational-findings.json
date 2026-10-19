@@ -1,0 +1,6 @@
+{
+  "M005": {
+    "kind": "provider_unavailable",
+    "notes": "TwoHTTP503 requests after triage/identity; real clinician recovery, no controlled preparation. Processing failure, not successful provider-refill completion."
+  }
+}

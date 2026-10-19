@@ -1,0 +1,34 @@
+{
+  "date": "2026-10-19",
+  "source_revision": "f9a425b",
+  "source_code_sha256": "30a031901ceb8a4efd1d1112dffab8b67b8c53be12da098b07622315a25f7b38",
+  "state": "One fresh sequential real MCP session",
+  "status": "completed",
+  "results": 5,
+  "messages_requested": 5,
+  "source_input_order": "Input file order unchanged",
+  "input_sha256": "7d0eba1d680dc844fee24c36552da8e5c70d3f88c8fce1c9d7012d3ce13e40ef",
+  "source_fixtures_modified": false,
+  "labels_in_inference": false,
+  "scripted_model": false,
+  "models_used": [
+    "gemini-3.5-flash-lite"
+  ],
+  "configured_primary_model": "gemini-3.5-flash-lite",
+  "fallback_models": [
+    "gemini-2.5-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite"
+  ],
+  "offline_tests": 237,
+  "test_elapsed_seconds": 23.27,
+  "manual_reviewed_results": 5,
+  "safety_completeness_passed": null,
+  "all_label_checks_passed": null,
+  "reviewer": "Codex explicit saved reply/trace review, not a clinical review",
+  "limitations": "Bounded English/Spanish grammar; independent messages; synthetic run-scoped state and handoffs.",
+  "review_criteria_passed": 5,
+  "review_criteria_total": 5,
+  "all_review_criteria_passed": true,
+  "review_criteria": "review-criteria.json"
+}

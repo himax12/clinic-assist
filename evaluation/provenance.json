@@ -1,34 +1,28 @@
 {
   "audit_date": "2026-10-19",
-  "offline_tests": 224,
-  "source_code_sha256": "313103df0ce4b84c40dcca1b7fab9c09115606563b3208096563a8a6dae20ee5",
+  "offline_tests": 237,
+  "source_code_sha256": "30a031901ceb8a4efd1d1112dffab8b67b8c53be12da098b07622315a25f7b38",
   "hash_method": "SHA256 over sorted src/**/*.py followed by pyproject.toml and uv.lock; path + NUL + bytes + NUL",
-  "benchmark_status": "failed",
+  "benchmark_status": "blocked_by_provider_daily_quota",
   "blocker": {
-    "processing_errors": [
-      {
-        "id": "M016",
-        "error": "RuntimeError: Tool iteration limit reached"
-      }
-    ],
-    "missing_results": [],
-    "operational_findings": {
-      "M016": {
-        "kind": "incomplete_booking_iteration_limit",
-        "severity": "medium",
-        "final_outcome_violation": true,
-        "notes": "FAILED: P018 Spanish annual-physical request, real PATEL Nov16 40minute slots available. Fourteen repeated offer-only finish calls rejected; no book call or committed appointment. Nineteen request attempts (one503 retried),18 completed responses; iteration limit reached. Host records real clinician_urgent recovery route, hidden recover_message, accurate Spanish routed reply, no fake booking. Explicit processing failure, final requested booking incomplete."
-      }
-    }
+    "latest_attempt": "benchmark-v13/provenance.json",
+    "failed_message": "M002",
+    "http_status": 429,
+    "limit_category": "daily_quota",
+    "successful_messages": 1,
+    "unprocessed_messages": 38,
+    "previous_attempt": "benchmark-v12/provenance.json",
+    "previous_failure": "M005 HTTP 503 after bounded retry"
   },
   "pending": [
-    "Resolve visible processing/operation failures and revalidate; do not claim completion"
+    "Run a fresh original-order 40-message benchmark after Gemini quota is available.",
+    "Review every saved reply and trace, report all failures and label disagreements, and update measured results."
   ],
-  "cost": "Actual cost unknown; documented known-usage standard paid-price equivalent in benchmark-v11/cost-context.json.",
+  "cost": "Actual cost unknown; known-usage paid-price equivalent documented in benchmark-v13/cost-context.json.",
   "identity_conflicts": "PDF privacy invariant takes precedence over target IDs in labels M011/M027.",
   "scorer_note": "Missing results count as failures and missed emergencies; they are not invented observed refill-only actions.",
-  "latest_live_smoke": "workflow-smoke-v3/provenance.json",
-  "latest_live_status": "40/40 results, 70.0% exact actions, 100.0% required emergency recall; explicit saved-result review.",
+  "latest_live_smoke": "booking-progress-live-v1/provenance.json",
+  "latest_live_status": "Five focused real-Gemini criteria passed; current full-batch validation blocked.",
   "fallback_validation": {
     "date": "2026-10-18",
     "offline_tests": 111,
@@ -46,25 +40,27 @@
     "blocker": "HTTP 429 classified as daily_quota on first full-batch model request; no billing/provider/model changes made.",
     "cost": "Unknown: rates not configured and rejected request usage not supplied."
   },
-  "source_revision": "848da0b",
+  "source_revision": "f9a425b",
   "latest_complete_benchmark": "benchmark-v11/provenance.json",
   "current_verification": {
     "command": "uv run --extra dev pytest -q",
-    "tests_passed": 224,
-    "elapsed_seconds": 23.89,
-    "review": "Independent scoped review approved verification delta; no Important/Critical findings. Prior consent/booking/calendar delta also independently reviewed."
+    "tests_passed": 237,
+    "elapsed_seconds": 32.47,
+    "review": "Independent review found no remaining Important/Critical issues; two minor guidance findings fixed with regressions."
   },
   "latest_unseen_rehearsal": "unseen-live-v3/provenance.json",
-  "latest_retained_attempt": "benchmark-v11/provenance.json",
+  "latest_retained_attempt": "benchmark-v13/provenance.json",
   "safety_completeness_passed": false,
   "all_label_checks_passed": false,
   "readiness_note": "Minimum safety/completeness and raw label correctness are separate; no overall readiness boolean.",
-  "model_choice": "Explicit already-configured Gemini3.5FlashLite benchmark override after primary3.8 transport failures; default configuration unchanged.",
-  "targeted_followup": "M016/M017 passed with configured2.5Flash fallback after3.1FlashLite503; full40 benchmark remains failed atM016.",
+  "model_choice": "Explicit Gemini3.5FlashLite focused/v12 override, then explicit Gemini2.5Flash fresh v13 attempt after503; account/defaults/billing/pacing unchanged.",
+  "targeted_followup": "Current-source focused five-case run passed, including M016 booking; does not replace full40 validation.",
   "merged_main_verification": {
     "command": "uv run --extra dev pytest -q",
-    "tests_passed": 224,
-    "elapsed_seconds": 34.48,
+    "tests_passed": 237,
+    "elapsed_seconds": 32.47,
     "date": "2026-10-19"
-  }
+  },
+  "historical_benchmark_note": "benchmark-v11 is the most recent complete attempt on older source848da0b; it contains one processing failure and is not a passing benchmark.",
+  "historical_unseen_note": "unseen-live-v3 predates current source; current focused evidence is booking-progress-live-v1."
 }

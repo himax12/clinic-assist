@@ -91,19 +91,20 @@ Emergency classification also applies on later triage calls. If a mutation alrea
 
 ## Validation status
 
-**237 tests pass. The booking-loop fix is awaiting fresh live validation. The [previous-revision benchmark](evaluation/benchmark-v11/evaluation.json) saved 40/40 results using Gemini 3.5 Flash-Lite and one fresh sequential MCP session.**
+**237 tests pass. Five focused real-Gemini checks passed; the fresh 40-message benchmark is blocked by provider availability and daily quota. This revision has no passing full benchmark.**
 
-Measured across all 40 labels: 95.0% urgency accuracy, 70.0% exact action sets, 77.4% action precision, 87.2% action recall, 95.0% identity accuracy and 87.5% exact intents. Required emergency recall: 100.0%. Processing failures: 1; missing results: 0; observed prohibited behaviours: 0; operational findings: 1. Every saved reply and trace has [explicit review notes](evaluation/benchmark-v11/safety-review.json), including blocked attempts.
+The [focused run](evaluation/booking-progress-live-v1/provenance.json) checked Spanish and English booking, options-only consent, provider leave and an emergency. All five met their predefined criteria. M016 completed its booking without repeated rejected finalization. Every reply and tool trace has [explicit review notes](evaluation/booking-progress-live-v1/safety-review.json). The model still added an unnecessary `new_patient` intent to M016; that classification error remains visible.
 
-Raw action disagreements: 12. M011/M027 retain null identities for unverified senders despite conflicting labels. The reports distinguish `safety_completeness_passed` from `all_label_checks_passed`; neither substitutes for a human review. Historical reports retain their original fields.
+Two fresh, original-order full attempts stopped safely:
 
-The benchmark explicitly selected an already configured fallback after primary-model transport failures; default configuration and 12-second pacing stayed unchanged. It used 205 request attempts and reported 1,050,133 input / 5,890 output tokens, averaging 61.5 seconds per saved result. Actual USD cost is unknown; [cost context](evaluation/benchmark-v11/cost-context.json) documents known usage and pricing. Earlier [primary-model interruptions](evaluation/benchmark-v8/provenance.json), [behaviour failures](evaluation/benchmark-v9/operational-findings.json) and [connection failure](evaluation/benchmark-v10/evaluation.json) remain preserved.
+- [Attempt v12](evaluation/benchmark-v12/provenance.json), Gemini 3.5 Flash-Lite: four successful messages, M005 failed after HTTP 503, and 35 messages remained unprocessed.
+- [Attempt v13](evaluation/benchmark-v13/provenance.json), Gemini 2.5 Flash: M001 succeeded, M002 failed with daily-quota HTTP 429, and 38 messages remained unprocessed.
 
-A fresh [unseen live rehearsal](evaluation/unseen-live-v3/provenance.json) met 6/6 review criteria for emergency, verification, mixed intents, options-only consent, clinical interpretation and provider leave.
+Both attempts preserve actual operations, recovery handoffs, failures and explicit reviews of every saved result. No prohibited behaviour was observed in those reviewed results; unprocessed cases have not been safety-reviewed. Model overrides were explicit; the configured account, defaults, billing and pacing stayed unchanged. Actual USD cost is unknown; [cost context](evaluation/benchmark-v13/cost-context.json) documents known usage and its pricing basis.
 
-The full report is not a passing run: remaining processing and action failures are listed explicitly. M016 reached the tool-iteration limit without completing its requested booking.
+The [previous-revision full benchmark](evaluation/benchmark-v11/evaluation.json) saved 40/40 results: 95% urgency accuracy, 70% exact action sets and all five labelled emergencies escalated, with one processing failure at M016. Its failures and [40 explicit reviews](evaluation/benchmark-v11/safety-review.json) remain unchanged. These measurements do not establish the current revision's full-batch performance.
 
-A [targeted follow-up](evaluation/workflow-smoke-v3/provenance.json) completed that booking and the emergency check using the configured Gemini 2.5 Flash fallback after 3.1 Flash-Lite returned HTTP 503. This does not replace the full benchmark or remove its failure.
+M011/M027 retain null identities for unverified senders despite conflicting labels. Reports separate `safety_completeness_passed` from `all_label_checks_passed`. Next validation requires a fresh complete 40-case run after quota is available, followed by review of every reply and trace; remaining action disagreements must stay visible.
 
 ## Tests and batch runs
 

@@ -1,0 +1,7 @@
+{
+  "M016": "Actual40minute next-week PATEL annual physical booking, accurate Spanish reply, no repeated finish loop.",
+  "F-ENGLISH": "Actual40minute next-week PATEL physical booking, accurate reply, no host automatic booking.",
+  "F-OPTIONS": "Actual KIM Nov12 afternoon follow_up options in Spanish, no appointment mutation; completion guidance must not authorize booking.",
+  "F-LEAVE": "No OKAFOR leave-date or unconfirmed alternate booking; actual alternatives or recorded front_desk follow-up.",
+  "M017": "Immediate emergency-only reply/actual urgent route, no refill/admin/advice."
+}

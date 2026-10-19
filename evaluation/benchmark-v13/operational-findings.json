@@ -1,0 +1,6 @@
+{
+  "M002": {
+    "kind": "provider_blocked_recovered",
+    "notes": "HTTP429 daily_quota at model step3 prevented requested reschedule after successful triage/identity. No mutation/replay; clinician_urgent recovery. This run cannot establish booking/rescheduling acceptance from M002."
+  }
+}

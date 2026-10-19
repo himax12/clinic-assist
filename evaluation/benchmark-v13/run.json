@@ -1,0 +1,97 @@
+{
+  "status": "failed",
+  "provider": "gemini",
+  "model": "gemini-2.5-flash",
+  "fallback_models": [
+    "gemini-2.5-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite"
+  ],
+  "models_attempted": [
+    "gemini-2.5-flash"
+  ],
+  "models_used": [
+    "gemini-2.5-flash"
+  ],
+  "messages": 40,
+  "processed_ids": [
+    "M001",
+    "M002"
+  ],
+  "unprocessed_ids": [
+    "M003",
+    "M004",
+    "M005",
+    "M006",
+    "M007",
+    "M008",
+    "M009",
+    "M010",
+    "M011",
+    "M012",
+    "M013",
+    "M014",
+    "M015",
+    "M016",
+    "M017",
+    "M018",
+    "M019",
+    "M020",
+    "M021",
+    "M022",
+    "M023",
+    "M024",
+    "M025",
+    "M026",
+    "M027",
+    "M028",
+    "M029",
+    "M030",
+    "M031",
+    "M032",
+    "M033",
+    "M034",
+    "M035",
+    "M036",
+    "M037",
+    "M038",
+    "M039",
+    "M040"
+  ],
+  "tokens": {
+    "input_tokens": 36106,
+    "output_tokens": 168
+  },
+  "estimated_cost_usd": null,
+  "cost_basis": "Rates not configured",
+  "errors": [
+    {
+      "id": "M002",
+      "error": "RateLimitError: Provider request failed; inspect request_events"
+    }
+  ],
+  "message_metrics": [
+    {
+      "id": "M001",
+      "model": "gemini-2.5-flash",
+      "elapsed_ms": 63578.0,
+      "model_calls": 6,
+      "models_attempted": [
+        "gemini-2.5-flash"
+      ],
+      "unknown_usage_attempts": 0
+    },
+    {
+      "id": "M002",
+      "model": "gemini-2.5-flash",
+      "elapsed_ms": 33938.0,
+      "model_calls": 3,
+      "models_attempted": [
+        "gemini-2.5-flash"
+      ],
+      "unknown_usage_attempts": 1
+    }
+  ],
+  "usage_complete": false,
+  "state_model": "Shared sequential MCP server; fresh source data at process start"
+}
