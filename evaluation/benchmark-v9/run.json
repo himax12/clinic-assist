@@ -1,0 +1,290 @@
+{
+  "status": "interrupted",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash-lite",
+  "messages": 40,
+  "requested_ids": [
+    "M001",
+    "M002",
+    "M003",
+    "M004",
+    "M005",
+    "M006",
+    "M007",
+    "M008",
+    "M009",
+    "M010",
+    "M011",
+    "M012",
+    "M013",
+    "M014",
+    "M015",
+    "M016",
+    "M017",
+    "M018",
+    "M019",
+    "M020",
+    "M021",
+    "M022",
+    "M023",
+    "M024",
+    "M025",
+    "M026",
+    "M027",
+    "M028",
+    "M029",
+    "M030",
+    "M031",
+    "M032",
+    "M033",
+    "M034",
+    "M035",
+    "M036",
+    "M037",
+    "M038",
+    "M039",
+    "M040"
+  ],
+  "processed_ids": [
+    "M001",
+    "M002",
+    "M003",
+    "M004",
+    "M005",
+    "M006",
+    "M007",
+    "M008",
+    "M009",
+    "M010",
+    "M011",
+    "M012",
+    "M013",
+    "M014",
+    "M015",
+    "M016",
+    "M017"
+  ],
+  "unprocessed_ids": [
+    "M018",
+    "M019",
+    "M020",
+    "M021",
+    "M022",
+    "M023",
+    "M024",
+    "M025",
+    "M026",
+    "M027",
+    "M028",
+    "M029",
+    "M030",
+    "M031",
+    "M032",
+    "M033",
+    "M034",
+    "M035",
+    "M036",
+    "M037",
+    "M038",
+    "M039",
+    "M040"
+  ],
+  "models_used": [
+    "gemini-3.5-flash-lite"
+  ],
+  "models_attempted": [
+    "gemini-3.5-flash-lite"
+  ],
+  "fallback_models": [
+    "gemini-2.5-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite"
+  ],
+  "errors": [
+    {
+      "id": "M018",
+      "error": "Manually interrupted after saved evidence exposed generic-handoff booking bypass and missed emergency guidance; fix and fresh run required"
+    }
+  ],
+  "message_metrics": [
+    {
+      "id": "M001",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 63844.0,
+      "model_calls": 6,
+      "models_attempted": [
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 0
+    },
+    {
+      "id": "M002",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 71047.0,
+      "model_calls": 6,
+      "models_attempted": [
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 0
+    },
+    {
+      "id": "M003",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 12063.0,
+      "model_calls": 1,
+      "models_attempted": [
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 0
+    },
+    {
+      "id": "M004",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 84000.0,
+      "model_calls": 7,
+      "models_attempted": [
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 0
+    },
+    {
+      "id": "M005",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 72000.0,
+      "model_calls": 6,
+      "models_attempted": [
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 0
+    },
+    {
+      "id": "M006",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 11938.0,
+      "model_calls": 1,
+      "models_attempted": [
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 0
+    },
+    {
+      "id": "M007",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 48000.0,
+      "model_calls": 4,
+      "models_attempted": [
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 0
+    },
+    {
+      "id": "M008",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 35968.0,
+      "model_calls": 3,
+      "models_attempted": [
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 0
+    },
+    {
+      "id": "M009",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 72547.0,
+      "model_calls": 6,
+      "models_attempted": [
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 0
+    },
+    {
+      "id": "M010",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 59922.0,
+      "model_calls": 5,
+      "models_attempted": [
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 0
+    },
+    {
+      "id": "M011",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 47782.0,
+      "model_calls": 4,
+      "models_attempted": [
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 0
+    },
+    {
+      "id": "M012",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 72046.0,
+      "model_calls": 6,
+      "models_attempted": [
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 0
+    },
+    {
+      "id": "M013",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 59782.0,
+      "model_calls": 5,
+      "models_attempted": [
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 0
+    },
+    {
+      "id": "M014",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 12266.0,
+      "model_calls": 1,
+      "models_attempted": [
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 0
+    },
+    {
+      "id": "M015",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 107719.0,
+      "model_calls": 9,
+      "models_attempted": [
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 0
+    },
+    {
+      "id": "M016",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 84813.0,
+      "model_calls": 7,
+      "models_attempted": [
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 0
+    },
+    {
+      "id": "M017",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 47750.0,
+      "model_calls": 4,
+      "models_attempted": [
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 0
+    }
+  ],
+  "tokens": {
+    "input_tokens": 394722,
+    "output_tokens": 2356
+  },
+  "usage_complete": false,
+  "estimated_cost_usd": null,
+  "cost_basis": "Unknown; interrupted in-flight request usage unavailable",
+  "manifest_provenance": "Reconstructed from flushed outcomes after manual interruption; original startup manifest retained as run-start.json.",
+  "incomplete_current_message": "M018 progress/request events not flushed; not processed or reviewed."
+}
