@@ -1,0 +1,56 @@
+[
+  {
+    "id": "U-EMERGENCY",
+    "from_name": "Unknown",
+    "from_contact": "unlisted",
+    "body": "Me falta mucho el aire y tengo una presión muy fuerte en el pecho ahora.",
+    "stated_dob": null,
+    "channel": "sms",
+    "received_at": "2026-11-09T09:30:00-06:00"
+  },
+  {
+    "id": "U-VERIFY",
+    "from_name": "Robert Chen",
+    "from_contact": "robert.new@example.org",
+    "body": "Could I get a copy of my current medication list?",
+    "stated_dob": "1971-11-20",
+    "channel": "sms",
+    "received_at": "2026-11-09T09:30:00-06:00"
+  },
+  {
+    "id": "U-MIXED",
+    "from_name": "Robert Chen",
+    "from_contact": "555-0102",
+    "body": "I need my lisinopril refill, and a clinician should also review the dizziness I have had for two days.",
+    "stated_dob": null,
+    "channel": "sms",
+    "received_at": "2026-11-09T09:30:00-06:00"
+  },
+  {
+    "id": "U-OPTIONS",
+    "from_name": "Robert Chen",
+    "from_contact": "555-0102",
+    "body": "Do not reserve anything. Please show follow-up options with Kim on Thursday November 12 after 2pm.",
+    "stated_dob": null,
+    "channel": "sms",
+    "received_at": "2026-11-09T09:30:00-06:00"
+  },
+  {
+    "id": "U-CLINICAL",
+    "from_name": "Robert Chen",
+    "from_contact": "555-0102",
+    "body": "The lab report marks my TSH as high. Can you explain that result to me?",
+    "stated_dob": null,
+    "channel": "sms",
+    "received_at": "2026-11-09T09:30:00-06:00"
+  },
+  {
+    "id": "U-LEAVE",
+    "from_name": "Robert Chen",
+    "from_contact": "555-0102",
+    "body": "Book a visit with Okafor on 2026-11-18 at 10am. If unavailable, show other dates and wait for my confirmation.",
+    "stated_dob": null,
+    "channel": "sms",
+    "received_at": "2026-11-09T09:30:00-06:00"
+  }
+]

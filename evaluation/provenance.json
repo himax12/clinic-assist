@@ -1,18 +1,19 @@
 {
   "audit_date": "2026-10-19",
-  "offline_tests": 150,
-  "source_code_sha256": "5195487caa81e17feb9592f73146a8f41964ede32c026f5e12d0de2af70ebeaf",
+  "offline_tests": 224,
+  "source_code_sha256": "313103df0ce4b84c40dcca1b7fab9c09115606563b3208096563a8a6dae20ee5",
   "hash_method": "SHA256 over sorted src/**/*.py followed by pyproject.toml and uv.lock; path + NUL + bytes + NUL",
-  "benchmark_status": "completed",
-  "live_gate_passed": true,
-  "submission_ready": true,
-  "blocker": null,
-  "pending": [],
-  "cost": "Actual USD cost unknown; see benchmark-v7/cost-context.json for documented known-usage paid-price equivalent.",
+  "benchmark_status": "fresh_full_run_in_progress",
+  "blocker": "Latest retained full attempt stopped after exhausted provider connectivity atM022; fresh attempt is in progress.",
+  "pending": [
+    "Complete fresh original-order40 benchmark and explicit reviews",
+    "Publish measured final report"
+  ],
+  "cost": "Actual cost unknown; documented known-usage pricing equivalents in retained cost-context.json files.",
   "identity_conflicts": "PDF privacy invariant takes precedence over target IDs in labels M011/M027.",
   "scorer_note": "Missing results count as failures and missed emergencies; they are not invented observed refill-only actions.",
-  "latest_live_smoke": "workflow-smoke-v1/provenance.json",
-  "latest_live_status": "Latest original-order attempt: 40/40 saved results, 0 processing errors, all observed replies/traces explicitly reviewed. See benchmark-v7/evaluation.json for raw action/urgency failures.",
+  "latest_live_smoke": "workflow-smoke-v2/provenance.json",
+  "latest_live_status": "Latest retained original-order attempt:21 successful results plus M022 transport-failure recovery;18 unprocessed. Fresh40 run underway on current revision; not yet passed.",
   "fallback_validation": {
     "date": "2026-10-18",
     "offline_tests": 111,
@@ -30,14 +31,16 @@
     "blocker": "HTTP 429 classified as daily_quota on first full-batch model request; no billing/provider/model changes made.",
     "cost": "Unknown: rates not configured and rejected request usage not supplied."
   },
-  "source_revision": "4475ff0",
+  "source_revision": "848da0b",
   "latest_complete_benchmark": "benchmark-v7/provenance.json",
   "current_verification": {
     "command": "uv run --extra dev pytest -q",
-    "tests_passed": 150,
-    "elapsed_seconds": 17.77,
-    "review": "Independent code review found no Important/Critical issues in three bounded fixes. Stale offer follow-up reproduced, fixed, reviewed. Tests passed."
+    "tests_passed": 224,
+    "elapsed_seconds": 23.89,
+    "review": "Independent scoped review approved verification delta; no Important/Critical findings. Prior consent/booking/calendar delta also independently reviewed."
   },
-  "latest_unseen_rehearsal": "unseen-live-v1/provenance.json: six of six review criteria met",
-  "latest_retained_attempt": "benchmark-v7/provenance.json"
+  "latest_unseen_rehearsal": "unseen-live-v3/provenance.json",
+  "latest_retained_attempt": "benchmark-v10/provenance.json",
+  "safety_completeness_passed": false,
+  "all_label_checks_passed": false
 }

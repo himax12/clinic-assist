@@ -90,9 +90,9 @@ Emergency classification also applies on later triage calls. If a mutation alrea
 
 ## Validation status
 
-**224 tests pass. Consent and workflow-completion fixes passed independent review; fresh live validation is in progress. The [previous-revision benchmark](evaluation/benchmark-v7/evaluation.json) processed 40/40 messages with Gemini 3.1 Flash-Lite through the configured fallback chain and one fresh sequential MCP session.**
+**224 tests pass. The [latest unseen rehearsal](evaluation/unseen-live-v3/provenance.json) met all six review criteria using real Gemini. The latest revision's full 40-message benchmark is still running; it has not passed yet.**
 
-Previous-revision measurements: 95.0% urgency accuracy, 62.5% exact action sets, 68.6% action precision, 74.5% action recall, and all five required emergencies escalated. A later [17-result attempt](evaluation/benchmark-v9/evaluation.json) exposed an incomplete-booking handoff bypass and missed emergency guidance; it was interrupted and retained. Those findings prompted new regressions and clearer triage guidance; the latest source is awaiting live validation. Every saved reply and trace has explicit review notes. M011/M027 keep null patient IDs for unverified senders despite conflicting labels.
+The [previous-revision full benchmark](evaluation/benchmark-v7/evaluation.json) measured 95.0% urgency accuracy, 62.5% exact action sets, 68.6% action precision, 74.5% action recall, and all five required emergencies escalated. Later [behaviour failures](evaluation/benchmark-v9/operational-findings.json) prompted booking, calendar, triage and verification fixes. A [subsequent run](evaluation/benchmark-v10/evaluation.json) saved 21 successful results and one connection-failure recovery before stopping; M023–M040 remain unprocessed in that attempt. Every saved result has explicit review notes. M011/M027 keep null patient IDs for unverified senders despite conflicting labels.
 
 New reports use `safety_completeness_passed` for the minimum checks and `all_label_checks_passed` for raw correctness. Neither replaces a human submission verdict; historical reports retain their original fields.
 
