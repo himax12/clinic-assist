@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-19",
+  "source_revision": "4475ff0",
+  "purpose": "Fresh original-order live rerun after appointment consent, real alternatives and urgent clinical routing fixes; explicit saved reply/trace review",
+  "status": "completed",
+  "messages_requested": 40,
+  "results": 40,
+  "input_sha256": "846cb42b4e1a667bd5679b5680ce54d5a0b5c6e120626aef300ca53a8643e563",
+  "labels_in_inference": false,
+  "scripted_model": false,
+  "source_fixtures_modified": false,
+  "state": "One fresh sequential real MCP session",
+  "models_used": [
+    "gemini-3.1-flash-lite"
+  ],
+  "configured_primary_model": "gemini-3.8-flash",
+  "fallback_models": [
+    "gemini-2.5-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite"
+  ],
+  "reviewer": "Codex: explicit saved reply and tool trace inspection; not a clinical review",
+  "offline_tests": 150,
+  "submission_ready": true,
+  "inference_source_revision": "4475ff0",
+  "source_code_sha256": "5195487caa81e17feb9592f73146a8f41964ede32c026f5e12d0de2af70ebeaf",
+  "source_input_order": "Original supplied order unchanged",
+  "manual_review_complete": true,
+  "operational_failures": {},
+  "verification": {
+    "command": "uv run --extra dev pytest -q",
+    "passed": 150,
+    "elapsed_seconds": 17.77
+  },
+  "limitations": "Bounded English/Spanish date/time grammar, independent messages, synthetic run-scoped storage and handoffs; not approved for real clinical deployment."
+}

@@ -3,18 +3,16 @@
   "offline_tests": 150,
   "source_code_sha256": "5195487caa81e17feb9592f73146a8f41964ede32c026f5e12d0de2af70ebeaf",
   "hash_method": "SHA256 over sorted src/**/*.py followed by pyproject.toml and uv.lock; path + NUL + bytes + NUL",
-  "benchmark_status": "latest_revision_partial_quota_blocked",
+  "benchmark_status": "completed",
   "live_gate_passed": true,
-  "submission_ready": false,
-  "blocker": "v6 daily quota exhausted during M019. M020-M040 unprocessed. Fresh original-order v7 attempt running with unchanged configured fallback chain.",
-  "pending": [
-    "Finish fresh v7 benchmark attempt or preserve provider-blocked evidence"
-  ],
-  "cost": "Latest retained attempt actual USD cost unknown; known-usage paid-price equivalent USD0.118730, see benchmark-v6/cost-context.json.",
+  "submission_ready": true,
+  "blocker": null,
+  "pending": [],
+  "cost": "Actual USD cost unknown; see benchmark-v7/cost-context.json for documented known-usage paid-price equivalent.",
   "identity_conflicts": "PDF privacy invariant takes precedence over target IDs in labels M011/M027.",
   "scorer_note": "Missing results count as failures and missed emergencies; they are not invented observed refill-only actions.",
   "latest_live_smoke": "workflow-smoke-v1/provenance.json",
-  "latest_live_status": "Three operational fixes passed fresh targeted live checks. Latest full attempt:18 success, M019 quota recovery,21 unprocessed. No prohibited behavior observed in19 explicitly reviewed saved results.",
+  "latest_live_status": "Latest original-order attempt: 40/40 saved results, 0 processing errors, all observed replies/traces explicitly reviewed. See benchmark-v7/evaluation.json for raw action/urgency failures.",
   "fallback_validation": {
     "date": "2026-10-18",
     "offline_tests": 111,
@@ -33,7 +31,7 @@
     "cost": "Unknown: rates not configured and rejected request usage not supplied."
   },
   "source_revision": "4475ff0",
-  "latest_complete_benchmark": "benchmark-v5/provenance.json",
+  "latest_complete_benchmark": "benchmark-v7/provenance.json",
   "current_verification": {
     "command": "uv run --extra dev pytest -q",
     "tests_passed": 150,
@@ -41,5 +39,5 @@
     "review": "Independent code review found no Important/Critical issues in three bounded fixes. Stale offer follow-up reproduced, fixed, reviewed. Tests passed."
   },
   "latest_unseen_rehearsal": "unseen-live-v1/provenance.json: six of six review criteria met",
-  "latest_retained_attempt": "benchmark-v6/provenance.json"
+  "latest_retained_attempt": "benchmark-v7/provenance.json"
 }
