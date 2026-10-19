@@ -62,5 +62,13 @@
     "date": "2026-10-19"
   },
   "historical_benchmark_note": "benchmark-v11 is the most recent complete attempt on older source848da0b; it contains one processing failure and is not a passing benchmark.",
-  "historical_unseen_note": "unseen-live-v3 predates current source; current focused evidence is booking-progress-live-v1."
+  "historical_unseen_note": "unseen-live-v3 predates current source; current focused evidence is booking-progress-live-v1.",
+  "cleanup_verification": {
+    "date": "2026-10-19",
+    "command": "uv run --extra dev pytest -q",
+    "tests_passed": 237,
+    "elapsed_seconds": 35.18,
+    "source_code_sha256": "4d3a932016df635278d94ca6e5f7f9ede23922f0a636ad9a49f23376140f29b1",
+    "scope": "Behaviour-preserving agent readability cleanup: named existing rejection thresholds and unchanged feedback text. Historical live-run source hashes and results remain unchanged. No new model requests."
+  }
 }

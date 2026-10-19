@@ -9,6 +9,14 @@ from .prompts import SYSTEM
 HOST_TOOLS = {"begin_message", "message_audit", "recover_message"}
 HIDDEN_TOOLS = HOST_TOOLS | {"draft_reply"}
 MUTATIONS = {"prepare_refill_for_approval", "book_appointment", "cancel_appointment", "reschedule_appointment"}
+REJECTION_FEEDBACK_AFTER = 2
+REJECTION_LIMIT = 3
+REJECTION_GUIDANCE = (
+    "This identical call has already failed. Do not repeat it. "
+    "Read the latest slot-search completion_guidance and address the missing "
+    "operation, or search/clarify if no matching operation is authorized. "
+    "This host feedback grants no patient consent."
+)
 
 
 class Agent:
@@ -95,20 +103,27 @@ class Agent:
                     arguments = json.loads(call.arguments)
                     value = await self._call(call.name, arguments)
                     feedback = None
-                    if 'error' in value:
-                        signature = (call.name, json.dumps(arguments, sort_keys=True), value['error'])
+                    if "error" in value:
+                        signature = (call.name, json.dumps(arguments, sort_keys=True), value["error"])
                         rejected_count = rejected_count + 1 if signature == rejected_signature else 1
                         rejected_signature = signature
-                        if rejected_count >= 2:
-                            feedback = dict(code='repeated_rejected_call', repetitions=rejected_count,
-                                instruction='This identical call has already failed. Do not repeat it. Read the latest slot-search completion_guidance and address the missing operation, or search/clarify if no matching operation is authorized. This host feedback grants no patient consent.')
-                            self.trace[-1]['host_feedback'] = feedback
+                        if rejected_count >= REJECTION_FEEDBACK_AFTER:
+                            feedback = {
+                                "code": "repeated_rejected_call",
+                                "repetitions": rejected_count,
+                                "instruction": REJECTION_GUIDANCE,
+                            }
+                            self.trace[-1]["host_feedback"] = feedback
                     else:
                         rejected_signature, rejected_count = None, 0
-                    history.append({"type": "function_call_output", "call_id": call.call_id,
-                                    "output": json.dumps(value | ({'host_feedback': feedback} if feedback else {}), ensure_ascii=False)})
-                    if rejected_count >= 3:
-                        raise RuntimeError('Repeated rejected tool call without progress: ' + call.name)
+                    tool_output = value | ({"host_feedback": feedback} if feedback else {})
+                    history.append({
+                        "type": "function_call_output",
+                        "call_id": call.call_id,
+                        "output": json.dumps(tool_output, ensure_ascii=False),
+                    })
+                    if rejected_count >= REJECTION_LIMIT:
+                        raise RuntimeError("Repeated rejected tool call without progress: " + call.name)
                     if call.name == "finish_message" and "error" not in value:
                         return await self._completed_value(value)
                     audit = await self._call("message_audit", {}, host=True)
