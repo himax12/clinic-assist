@@ -1,20 +1,20 @@
 {
-  "audit_date": "2026-10-18",
-  "offline_tests": 131,
-  "source_code_sha256": "eecb51894a6db87f7ba5d64e2d4b3de03752cca7a0fdfb9a21e61b8741bd7528",
+  "audit_date": "2026-10-19",
+  "offline_tests": 150,
+  "source_code_sha256": "5195487caa81e17feb9592f73146a8f41964ede32c026f5e12d0de2af70ebeaf",
   "hash_method": "SHA256 over sorted src/**/*.py followed by pyproject.toml and uv.lock; path + NUL + bytes + NUL",
-  "benchmark_status": "complete_with_operational_failures",
+  "benchmark_status": "latest_revision_partial_quota_blocked",
   "live_gate_passed": true,
   "submission_ready": false,
-  "blocker": "M005 urgent triage/routing inconsistency; M028 no actual alternatives; M029 unconfirmed alternative time booked. Both baseline wrong-week mutations corrected in rerun.",
+  "blocker": "v6 daily quota exhausted during M019. M020-M040 unprocessed. Fresh original-order v7 attempt running with unchanged configured fallback chain.",
   "pending": [
-    "Fix remaining general workflow/consent gaps, then validate into a new benchmark directory"
+    "Finish fresh v7 benchmark attempt or preserve provider-blocked evidence"
   ],
-  "cost": "Actual USD cost unknown; known-usage paid-price equivalent 0.2482 USD, see benchmark-v5/cost-context.json.",
+  "cost": "Latest retained attempt actual USD cost unknown; known-usage paid-price equivalent USD0.118730, see benchmark-v6/cost-context.json.",
   "identity_conflicts": "PDF privacy invariant takes precedence over target IDs in labels M011/M027.",
   "scorer_note": "Missing results count as failures and missed emergencies; they are not invented observed refill-only actions.",
-  "latest_live_smoke": "reliability-smoke-v6/provenance.json",
-  "latest_live_status": "Fresh rerun completed40/40; all five required emergencies escalated; no labelled prohibited behavior observed; three operational findings remain.",
+  "latest_live_smoke": "workflow-smoke-v1/provenance.json",
+  "latest_live_status": "Three operational fixes passed fresh targeted live checks. Latest full attempt:18 success, M019 quota recovery,21 unprocessed. No prohibited behavior observed in19 explicitly reviewed saved results.",
   "fallback_validation": {
     "date": "2026-10-18",
     "offline_tests": 111,
@@ -32,13 +32,14 @@
     "blocker": "HTTP 429 classified as daily_quota on first full-batch model request; no billing/provider/model changes made.",
     "cost": "Unknown: rates not configured and rejected request usage not supplied."
   },
-  "source_revision": "6af7f01",
+  "source_revision": "4475ff0",
   "latest_complete_benchmark": "benchmark-v5/provenance.json",
   "current_verification": {
     "command": "uv run --extra dev pytest -q",
-    "tests_passed": 131,
-    "elapsed_seconds": 33.81,
-    "review": "Independent review found negative/conflicting week references and typographic negation bypass; fixed with regressions and re-reviewed. No remaining Important/Critical code findings; limited grammar, not general NLP."
+    "tests_passed": 150,
+    "elapsed_seconds": 17.77,
+    "review": "Independent code review found no Important/Critical issues in three bounded fixes. Stale offer follow-up reproduced, fixed, reviewed. Tests passed."
   },
-  "latest_unseen_rehearsal": "unseen-live-v1/provenance.json: six of six review criteria met"
+  "latest_unseen_rehearsal": "unseen-live-v1/provenance.json: six of six review criteria met",
+  "latest_retained_attempt": "benchmark-v6/provenance.json"
 }

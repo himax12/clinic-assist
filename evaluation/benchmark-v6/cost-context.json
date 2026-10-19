@@ -1,0 +1,25 @@
+{
+  "currency": "USD",
+  "actual_cost_usd": null,
+  "known_usage_paid_equivalent_usd": 0.11873,
+  "known_usage_by_model": {
+    "gemini-3.5-flash-lite": {
+      "input_tokens": 375492,
+      "output_tokens": 2433
+    }
+  },
+  "unknown_usage_requests": 39,
+  "rates_usd_per_million": {
+    "gemini-3.5-flash-lite": {
+      "input": 0.3,
+      "output": 2.5
+    },
+    "gemini-3.1-flash-lite": {
+      "input": 0.25,
+      "output": 1.5
+    }
+  },
+  "pricing_checked": "2026-10-19",
+  "pricing_source": "https://ai.google.dev/gemini-api/docs/pricing",
+  "basis": "Standard paid token-price equivalent for reported usage only; not an invoice or actual free-tier charge. Excludes unknown failed-request usage, cache discounts and account-specific pricing."
+}

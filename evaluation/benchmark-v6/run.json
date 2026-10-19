@@ -1,0 +1,307 @@
+{
+  "status": "failed",
+  "provider": "gemini",
+  "model": "gemini-3.8-flash",
+  "fallback_models": [
+    "gemini-2.5-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite"
+  ],
+  "models_attempted": [
+    "gemini-3.8-flash",
+    "gemini-2.5-flash",
+    "gemini-3.5-flash-lite"
+  ],
+  "models_used": [
+    "gemini-3.5-flash-lite"
+  ],
+  "messages": 40,
+  "processed_ids": [
+    "M001",
+    "M002",
+    "M003",
+    "M004",
+    "M005",
+    "M006",
+    "M007",
+    "M008",
+    "M009",
+    "M010",
+    "M011",
+    "M012",
+    "M013",
+    "M014",
+    "M015",
+    "M016",
+    "M017",
+    "M018",
+    "M019"
+  ],
+  "unprocessed_ids": [
+    "M020",
+    "M021",
+    "M022",
+    "M023",
+    "M024",
+    "M025",
+    "M026",
+    "M027",
+    "M028",
+    "M029",
+    "M030",
+    "M031",
+    "M032",
+    "M033",
+    "M034",
+    "M035",
+    "M036",
+    "M037",
+    "M038",
+    "M039",
+    "M040"
+  ],
+  "tokens": {
+    "input_tokens": 375492,
+    "output_tokens": 2433
+  },
+  "estimated_cost_usd": null,
+  "cost_basis": "Model fallback attempted; per-model pricing not configured",
+  "errors": [
+    {
+      "id": "M019",
+      "error": "RateLimitError: Provider request failed; inspect request_events"
+    }
+  ],
+  "message_metrics": [
+    {
+      "id": "M001",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 74266.0,
+      "model_calls": 7,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    },
+    {
+      "id": "M002",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 95687.0,
+      "model_calls": 8,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    },
+    {
+      "id": "M003",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 36406.0,
+      "model_calls": 3,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    },
+    {
+      "id": "M004",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 132297.0,
+      "model_calls": 11,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    },
+    {
+      "id": "M005",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 95719.0,
+      "model_calls": 8,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    },
+    {
+      "id": "M006",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 35969.0,
+      "model_calls": 3,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    },
+    {
+      "id": "M007",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 72109.0,
+      "model_calls": 6,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    },
+    {
+      "id": "M008",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 60125.0,
+      "model_calls": 5,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    },
+    {
+      "id": "M009",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 96375.0,
+      "model_calls": 8,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    },
+    {
+      "id": "M010",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 71422.0,
+      "model_calls": 6,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    },
+    {
+      "id": "M011",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 72781.0,
+      "model_calls": 6,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    },
+    {
+      "id": "M012",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 95735.0,
+      "model_calls": 8,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    },
+    {
+      "id": "M013",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 84078.0,
+      "model_calls": 7,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    },
+    {
+      "id": "M014",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 36235.0,
+      "model_calls": 3,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    },
+    {
+      "id": "M015",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 95515.0,
+      "model_calls": 8,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    },
+    {
+      "id": "M016",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 84000.0,
+      "model_calls": 7,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    },
+    {
+      "id": "M017",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 36485.0,
+      "model_calls": 3,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    },
+    {
+      "id": "M018",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 108312.0,
+      "model_calls": 9,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 2
+    },
+    {
+      "id": "M019",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 59141.0,
+      "model_calls": 5,
+      "models_attempted": [
+        "gemini-3.8-flash",
+        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 3
+    }
+  ],
+  "usage_complete": false,
+  "state_model": "Shared sequential MCP server; fresh source data at process start"
+}

@@ -89,9 +89,9 @@ Emergency classification also applies on later triage calls. If a mutation alrea
 
 **150 tests pass. The [latest complete benchmark of the previous revision](evaluation/benchmark-v5/evaluation.json) processed all 40 original messages through one fresh sequential MCP session using Gemini 3.5 Flash-Lite via the configured fallback chain. Submission readiness remains false.**
 
-The three operational failures have since been fixed and passed a [fresh live workflow check](evaluation/workflow-smoke-v1/provenance.json); the new full benchmark is in progress.
+The three operational failures have since been fixed and passed a [fresh live workflow check](evaluation/workflow-smoke-v1/provenance.json). A [new benchmark attempt](evaluation/benchmark-v6/evaluation.json) completed 18 messages before quota failed during M019; M020–M040 were unprocessed. Its partial results are preserved. A fresh attempt through the remaining configured fallback is in progress.
 
-Measured: 97.5% urgency accuracy, 75.0% exact action sets, 77.1% action precision, 78.7% action recall, and all five labelled emergencies escalated. Every reply and trace was reviewed: no labelled prohibited behaviour was observed. Three operational findings remain: urgent triage without matching clinical routing, missing actual alternatives, and booking an alternative time without confirmation. See [review notes](evaluation/benchmark-v5/safety-review.json) and [findings](evaluation/benchmark-v5/operational-findings.json).
+Previous-revision benchmark: 97.5% urgency accuracy, 75.0% exact action sets, 77.1% action precision, 78.7% action recall, and all five labelled emergencies escalated. Every reply and trace was reviewed: no labelled prohibited behaviour was observed. That run exposed the three workflow failures above; see [review notes](evaluation/benchmark-v5/safety-review.json) and [findings](evaluation/benchmark-v5/operational-findings.json). The corrected revision still needs a complete benchmark.
 
 Both wrong-week mutations from the [preserved baseline](evaluation/benchmark-v4/evaluation.json) are corrected in the rerun. Explicit-week guards cover a limited English/Spanish grammar; negative or competing week references require clarification. All [six unseen live cases](evaluation/unseen-live-v1/provenance.json) met their review criteria. Earlier partial and failed attempts remain preserved under `evaluation/`.
 
@@ -129,6 +129,6 @@ Traces record every attempted model and fallback reason. Batch reports include c
 
 Reused: supplied synthetic fixtures, MCP and OpenAI Python SDKs, Pydantic, Rich, prompt-toolkit and pytest. Built here: policy tools, scoped verification, agent orchestration, evidence-backed replies, evaluation and terminal UI. AI coding assistance was used.
 
-Next: enforce exact-time confirmation, return actual alternatives after empty searches, align clinical routing with triage, then rerun the benchmark. No sample-ID-specific rules. Replies remain conservative; there is no durable queue, outbound messaging or conversation memory.
+Next: complete the benchmark with available Gemini quota and retain remaining action mismatches. No sample-ID-specific rules. Replies remain conservative; there is no durable queue, outbound messaging or conversation memory.
 
 Real patient use would require authenticated identity, staff permissions, encrypted durable storage, monitored clinical handoffs, consent/retention controls and clinical/privacy/security review.
