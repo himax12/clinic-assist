@@ -1,0 +1,97 @@
+{
+  "status": "completed",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash-lite",
+  "fallback_models": [
+    "gemini-2.5-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite"
+  ],
+  "models_attempted": [
+    "gemini-3.5-flash-lite"
+  ],
+  "models_used": [
+    "gemini-3.5-flash-lite"
+  ],
+  "messages": 6,
+  "processed_ids": [
+    "U-EMERGENCY",
+    "U-VERIFY",
+    "U-MIXED",
+    "U-OPTIONS",
+    "U-CLINICAL",
+    "U-LEAVE"
+  ],
+  "unprocessed_ids": [],
+  "tokens": {
+    "input_tokens": 113399,
+    "output_tokens": 683
+  },
+  "estimated_cost_usd": null,
+  "cost_basis": "Rates not configured",
+  "errors": [],
+  "message_metrics": [
+    {
+      "id": "U-EMERGENCY",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 2625.0,
+      "model_calls": 1,
+      "models_attempted": [
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 0
+    },
+    {
+      "id": "U-VERIFY",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 35734.0,
+      "model_calls": 3,
+      "models_attempted": [
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 0
+    },
+    {
+      "id": "U-MIXED",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 84438.0,
+      "model_calls": 7,
+      "models_attempted": [
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 0
+    },
+    {
+      "id": "U-OPTIONS",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 47672.0,
+      "model_calls": 4,
+      "models_attempted": [
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 0
+    },
+    {
+      "id": "U-CLINICAL",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 37437.0,
+      "model_calls": 3,
+      "models_attempted": [
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 0
+    },
+    {
+      "id": "U-LEAVE",
+      "model": "gemini-3.5-flash-lite",
+      "elapsed_ms": 59234.0,
+      "model_calls": 5,
+      "models_attempted": [
+        "gemini-3.5-flash-lite"
+      ],
+      "unknown_usage_attempts": 0
+    }
+  ],
+  "usage_complete": true,
+  "state_model": "Shared sequential MCP server; fresh source data at process start"
+}

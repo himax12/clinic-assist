@@ -531,6 +531,11 @@ class Clinic:
         # Only the host recovery entry point can set this keyword. Model-supplied
         # routing reasons never exempt a request from completion validation.
         if self.urgency != 'emergency' and not recovery:
+            if (set(self.intents) & {'records', 'refill', 'cancel', 'reschedule'}
+                    and not self.find_patient()['verified'] and 'decline_disclosure' not in actions):
+                actions.add('request_verification')
+                if not any(e['kind'] == 'request_verification' for e in audit['events']):
+                    self._record('request_verification', reason='Unverified sender requested patient-specific information or an operation')
             needs_visit = any(e['kind'] == 'refill_check' and e['decision']['status'] == 'needs_visit'
                               for e in audit['events'])
             queues = {r['queue'] for r in audit['routes']}

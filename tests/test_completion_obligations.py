@@ -156,6 +156,30 @@ def test_public_hours_question_still_gets_hours():
     assert 'Clinic hours' in clinic.finish_message(['answer_directly'])['reply_draft']
 
 
+@pytest.mark.parametrize('language, phrase', [('English', 'verify your identity'), ('Spanish', 'verificar su identidad')])
+def test_unverified_personal_record_handoff_still_explains_verification(language, phrase):
+    clinic = inbox('Please send me my medication list.', ['records'], 'unlisted@example.org')
+    clinic.triage('routine', ['records'], language)
+    clinic.route('front_desk', 'Records request needs staff assistance')
+    result = clinic.finish_message(['route_to_front_desk'])
+    assert 'request_verification' in result['actions']
+    assert phrase in result['reply_draft']
+    assert clinic.audit()['patient_id'] is None
+    assert any(e['kind'] == 'request_verification' for e in clinic.audit()['events'])
+
+
+def test_third_party_disclosure_decline_is_not_replaced_by_self_verification():
+    clinic = inbox("Send me my wife's medication list.", ['records'], 'unlisted@example.org')
+    result = clinic.finish_message(['decline_disclosure'])
+    assert result['actions'] == ['decline_disclosure']
+
+
+def test_public_new_patient_help_does_not_require_existing_patient_verification():
+    clinic = inbox('I am new and need registration help.', ['new_patient'], 'unlisted@example.org')
+    clinic.route('front_desk', 'Help with registration')
+    assert 'request_verification' not in clinic.finish_message(['offer_new_patient_booking'])['actions']
+
+
 def test_premature_offer_tool_error_guides_booking_then_terminal_completion():
     async def scenario():
         body = 'Please book an appointment Tuesday morning.'
