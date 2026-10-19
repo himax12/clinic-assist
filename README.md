@@ -17,7 +17,7 @@ Add your `GEMINI_API_KEY` to `.env`, then launch:
 uv run clinic-assist
 ```
 
-Browsing works without a key. Processing requires available Gemini quota. Keep `.env` local.
+Browsing works without a key. Processing requires available Gemini quota. Keep `.env` local. To use the measured benchmark model interactively, run `uv run clinic-assist chat --model gemini-3.5-flash-lite`.
 
 - `/inbox` â€” list samples; `/open M001` â€” read one.
 - `/run M001` â€” process a sample, or type your own message and supply sender details.
@@ -90,15 +90,17 @@ Emergency classification also applies on later triage calls. If a mutation alrea
 
 ## Validation status
 
-**224 tests pass. The [latest unseen rehearsal](evaluation/unseen-live-v3/provenance.json) met all six review criteria using real Gemini. The latest revision's full 40-message benchmark is still running; it has not passed yet.**
+**224 tests pass. The [latest live benchmark](evaluation/benchmark-v11/evaluation.json) saved 40/40 results using Gemini 3.5 Flash-Lite and one fresh sequential MCP session.**
 
-The [previous-revision full benchmark](evaluation/benchmark-v7/evaluation.json) measured 95.0% urgency accuracy, 62.5% exact action sets, 68.6% action precision, 74.5% action recall, and all five required emergencies escalated. Later [behaviour failures](evaluation/benchmark-v9/operational-findings.json) prompted booking, calendar, triage and verification fixes. A [subsequent run](evaluation/benchmark-v10/evaluation.json) saved 21 successful results and one connection-failure recovery before stopping; M023–M040 remain unprocessed in that attempt. Every saved result has explicit review notes. M011/M027 keep null patient IDs for unverified senders despite conflicting labels.
+Measured across all 40 labels: 95.0% urgency accuracy, 70.0% exact action sets, 77.4% action precision, 87.2% action recall, 95.0% identity accuracy and 87.5% exact intents. Required emergency recall: 100.0%. Processing failures: 1; missing results: 0; observed prohibited behaviours: 0; operational findings: 1. Every saved reply and trace has [explicit review notes](evaluation/benchmark-v11/safety-review.json), including blocked attempts.
 
-New reports use `safety_completeness_passed` for the minimum checks and `all_label_checks_passed` for raw correctness. Neither replaces a human submission verdict; historical reports retain their original fields.
+Raw action disagreements: 12. M011/M027 retain null identities for unverified senders despite conflicting labels. The reports distinguish `safety_completeness_passed` from `all_label_checks_passed`; neither substitutes for a human review. Historical reports retain their original fields.
 
-The three previous workflow failures are fixed and passed [targeted real Gemini checks](evaluation/workflow-smoke-v1/provenance.json): confirmation before an alternative-time mutation, actual alternatives after an empty search, and automatic handoff for urgent clinical triage. Earlier full baselines and the quota-blocked [19-result attempt](evaluation/benchmark-v6/evaluation.json) remain preserved. Six [unseen live cases on the earlier calendar-guard revision](evaluation/unseen-live-v1/provenance.json) also passed their review criteria.
+The benchmark explicitly selected an already configured fallback after primary-model transport failures; default configuration and 12-second pacing stayed unchanged. It used 205 request attempts and reported 1,050,133 input / 5,890 output tokens, averaging 61.5 seconds per saved result. Actual USD cost is unknown; [cost context](evaluation/benchmark-v11/cost-context.json) documents known usage and pricing. Earlier [primary-model interruptions](evaluation/benchmark-v8/provenance.json), [behaviour failures](evaluation/benchmark-v9/operational-findings.json) and [connection failure](evaluation/benchmark-v10/evaluation.json) remain preserved.
 
-Latest attempt: 294 model request attempts, 784,507 input / 5,054 output tokens, mean 88.0 seconds per saved result. Actual USD cost is unknown; [cost context](evaluation/benchmark-v7/cost-context.json) documents known usage and public pricing. Quota failures and model choices remain in the traces. See [provenance](evaluation/benchmark-v7/provenance.json).
+A fresh [unseen live rehearsal](evaluation/unseen-live-v3/provenance.json) met 6/6 review criteria for emergency, verification, mixed intents, options-only consent, clinical interpretation and provider leave.
+
+The full report is not a passing run: remaining processing and action failures are listed explicitly. M016 reached the tool-iteration limit without completing its requested booking.
 
 ## Tests and batch runs
 
@@ -106,13 +108,13 @@ Latest attempt: 294 model request attempts, 784,507 input / 5,054 output tokens,
 uv run pytest -q
 uv run clinic-assist inspect
 uv run clinic-assist run --limit 1 --output output/smoke-1
-uv run clinic-assist run --output output/full-1
+uv run clinic-assist run --model gemini-3.5-flash-lite --output output/full-1
 uv run clinic-assist evaluate --results output/full-1/results.jsonl --output output/full-1/evaluation.json
 ```
 
 Use a fresh output directory each time. Runs save `results.jsonl`, `traces.jsonl` and `run.json`; processing errors return exit code 2. Scratch runs stay under ignored `output/`; retained evaluation evidence belongs in `evaluation/`.
 
-For safety review, create `observations.json` mapping each reviewed message ID to observed label prohibition names; `[]` means explicitly reviewed clean. Pass it with `evaluate --observations path/to/observations.json`. Reviewed semantic errors, such as a booking on the wrong requested date, belong in `operational-findings.json` beside the results (or pass `--operational-findings`). These findings block readiness even when action labels match.
+For safety review, create `observations.json` mapping each reviewed message ID to observed label prohibition names; `[]` means explicitly reviewed clean. Pass it with `evaluate --observations path/to/observations.json`. Reviewed semantic errors, such as a booking on the wrong requested date, belong in `operational-findings.json` beside the results (or pass `--operational-findings`). These findings fail the safety/completeness gate even when action labels match.
 
 For your own JSON input, use `run --messages new-message.json --output output/new-1`. Each message needs `id`, timezone-aware `received_at`, `channel` (`sms`, `portal` or `email`), `from_name`, `from_contact` and `body`; `stated_dob` is optional.
 
@@ -130,6 +132,6 @@ Traces record every attempted model and fallback reason. Batch reports include c
 
 Reused: supplied synthetic fixtures, MCP and OpenAI Python SDKs, Pydantic, Rich, prompt-toolkit and pytest. Built here: policy tools, scoped verification, agent orchestration, evidence-backed replies, evaluation and terminal UI. AI coding assistance was used.
 
-Next: improve exact action selection, explicit clarification and reply relevance using the recorded failures. No sample-ID-specific rules. Replies remain conservative; there is no durable queue, outbound messaging or conversation memory.
+Next: improve any remaining action mismatches and reply relevance using the recorded failures; extend the bounded request grammar with general regressions. No sample-ID-specific rules. Replies remain conservative; there is no durable queue, outbound messaging or conversation memory.
 
 Real patient use would require authenticated identity, staff permissions, encrypted durable storage, monitored clinical handoffs, consent/retention controls and clinical/privacy/security review.

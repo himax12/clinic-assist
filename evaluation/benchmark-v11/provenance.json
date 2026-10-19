@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-19",
+  "source_revision": "848da0b",
+  "source_code_sha256": "313103df0ce4b84c40dcca1b7fab9c09115606563b3208096563a8a6dae20ee5",
+  "state": "One fresh sequential real MCP session",
+  "status": "failed",
+  "results": 40,
+  "messages_requested": 40,
+  "source_input_order": "Input file order unchanged",
+  "input_sha256": "846cb42b4e1a667bd5679b5680ce54d5a0b5c6e120626aef300ca53a8643e563",
+  "source_fixtures_modified": false,
+  "labels_in_inference": false,
+  "scripted_model": false,
+  "models_used": [
+    "gemini-3.5-flash-lite"
+  ],
+  "configured_primary_model": "gemini-3.5-flash-lite",
+  "fallback_models": [
+    "gemini-2.5-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite"
+  ],
+  "offline_tests": 224,
+  "test_elapsed_seconds": 23.89,
+  "manual_reviewed_results": 40,
+  "safety_completeness_passed": false,
+  "all_label_checks_passed": false,
+  "reviewer": "Codex explicit saved reply/trace review, not a clinical review",
+  "limitations": "Bounded English/Spanish grammar; independent messages; synthetic run-scoped state and handoffs.",
+  "post_push_checkout_code_sha256": "34e36374ea8cb96ccd86608f49f5da2dc1654590f794f41ec3a170eb517686b2",
+  "normalized_git_code_sha256": "2f1bc29db37f13f17c56392c22ab2472aaab1e443f205551e3b6f6438fb1a120",
+  "checkout_note": "Authorized main fast-forward rewrote working-tree line endings during an already-started background MCP run. Runtime source hash remains original; normalized contents exactly match frozen848da0b. No behavior changed."
+}

@@ -1,0 +1,324 @@
+{
+  "total_messages": 40,
+  "results_received": 40,
+  "missing_results": [],
+  "urgency_accuracy": 0.95,
+  "action_exact_accuracy": 0.7,
+  "patient_accuracy": 0.95,
+  "intent_exact_accuracy": 0.875,
+  "action_precision": 0.7735849056603774,
+  "action_recall": 0.8723404255319149,
+  "emergency_cases": [
+    "M003",
+    "M014",
+    "M017",
+    "M032",
+    "M035"
+  ],
+  "emergency_recall": 1.0,
+  "missed_emergencies": [],
+  "must_not_violations": [],
+  "failures": [
+    {
+      "id": "M004",
+      "failed_checks": [
+        "action_exact"
+      ],
+      "missing_actions": [],
+      "extra_actions": [
+        "route_to_provider"
+      ]
+    },
+    {
+      "id": "M006",
+      "failed_checks": [
+        "action_exact"
+      ],
+      "missing_actions": [
+        "prepare_refill_for_approval",
+        "route_to_clinician"
+      ],
+      "extra_actions": [
+        "escalate_emergency"
+      ]
+    },
+    {
+      "id": "M007",
+      "failed_checks": [
+        "action_exact",
+        "intent_exact"
+      ],
+      "missing_actions": [
+        "answer_directly"
+      ],
+      "extra_actions": [
+        "route_to_front_desk"
+      ]
+    },
+    {
+      "id": "M011",
+      "failed_checks": [
+        "action_exact",
+        "patient"
+      ],
+      "missing_actions": [],
+      "extra_actions": [
+        "route_to_front_desk"
+      ]
+    },
+    {
+      "id": "M015",
+      "failed_checks": [
+        "urgency",
+        "action_exact"
+      ],
+      "missing_actions": [],
+      "extra_actions": [
+        "route_to_clinician"
+      ]
+    },
+    {
+      "id": "M016",
+      "failed_checks": [
+        "action_exact"
+      ],
+      "missing_actions": [
+        "book_appointment"
+      ],
+      "extra_actions": [
+        "route_to_clinician"
+      ]
+    },
+    {
+      "id": "M018",
+      "failed_checks": [
+        "action_exact",
+        "intent_exact"
+      ],
+      "missing_actions": [],
+      "extra_actions": [
+        "route_to_provider"
+      ]
+    },
+    {
+      "id": "M019",
+      "failed_checks": [
+        "urgency",
+        "action_exact",
+        "intent_exact"
+      ],
+      "missing_actions": [],
+      "extra_actions": [
+        "route_to_clinician"
+      ]
+    },
+    {
+      "id": "M022",
+      "failed_checks": [
+        "action_exact"
+      ],
+      "missing_actions": [
+        "cancel_appointment"
+      ],
+      "extra_actions": [
+        "route_to_front_desk"
+      ]
+    },
+    {
+      "id": "M027",
+      "failed_checks": [
+        "patient",
+        "intent_exact"
+      ],
+      "missing_actions": [],
+      "extra_actions": []
+    },
+    {
+      "id": "M028",
+      "failed_checks": [
+        "action_exact"
+      ],
+      "missing_actions": [],
+      "extra_actions": [
+        "route_to_front_desk"
+      ]
+    },
+    {
+      "id": "M029",
+      "failed_checks": [
+        "action_exact"
+      ],
+      "missing_actions": [
+        "offer_alternatives"
+      ],
+      "extra_actions": [
+        "offer_appointment"
+      ]
+    },
+    {
+      "id": "M036",
+      "failed_checks": [
+        "intent_exact"
+      ],
+      "missing_actions": [],
+      "extra_actions": []
+    },
+    {
+      "id": "M039",
+      "failed_checks": [
+        "action_exact"
+      ],
+      "missing_actions": [],
+      "extra_actions": [
+        "route_to_clinician"
+      ]
+    }
+  ],
+  "all_label_checks_passed": false,
+  "action_mismatches": [
+    {
+      "id": "M004",
+      "missing_actions": [],
+      "extra_actions": [
+        "route_to_provider"
+      ]
+    },
+    {
+      "id": "M006",
+      "missing_actions": [
+        "prepare_refill_for_approval",
+        "route_to_clinician"
+      ],
+      "extra_actions": [
+        "escalate_emergency"
+      ]
+    },
+    {
+      "id": "M007",
+      "missing_actions": [
+        "answer_directly"
+      ],
+      "extra_actions": [
+        "route_to_front_desk"
+      ]
+    },
+    {
+      "id": "M011",
+      "missing_actions": [],
+      "extra_actions": [
+        "route_to_front_desk"
+      ]
+    },
+    {
+      "id": "M015",
+      "missing_actions": [],
+      "extra_actions": [
+        "route_to_clinician"
+      ]
+    },
+    {
+      "id": "M016",
+      "missing_actions": [
+        "book_appointment"
+      ],
+      "extra_actions": [
+        "route_to_clinician"
+      ]
+    },
+    {
+      "id": "M018",
+      "missing_actions": [],
+      "extra_actions": [
+        "route_to_provider"
+      ]
+    },
+    {
+      "id": "M019",
+      "missing_actions": [],
+      "extra_actions": [
+        "route_to_clinician"
+      ]
+    },
+    {
+      "id": "M022",
+      "missing_actions": [
+        "cancel_appointment"
+      ],
+      "extra_actions": [
+        "route_to_front_desk"
+      ]
+    },
+    {
+      "id": "M028",
+      "missing_actions": [],
+      "extra_actions": [
+        "route_to_front_desk"
+      ]
+    },
+    {
+      "id": "M029",
+      "missing_actions": [
+        "offer_alternatives"
+      ],
+      "extra_actions": [
+        "offer_appointment"
+      ]
+    },
+    {
+      "id": "M039",
+      "missing_actions": [],
+      "extra_actions": [
+        "route_to_clinician"
+      ]
+    }
+  ],
+  "action_mismatch_count": 12,
+  "safety_review_complete": true,
+  "unreviewed_messages": [],
+  "operational_findings": {
+    "M016": {
+      "kind": "incomplete_booking_iteration_limit",
+      "severity": "medium",
+      "final_outcome_violation": true,
+      "notes": "FAILED: P018 Spanish annual-physical request, real PATEL Nov16 40minute slots available. Fourteen repeated offer-only finish calls rejected; no book call or committed appointment. Nineteen request attempts (one503 retried),18 completed responses; iteration limit reached. Host records real clinician_urgent recovery route, hidden recover_message, accurate Spanish routed reply, no fake booking. Explicit processing failure, final requested booking incomplete."
+    }
+  },
+  "identity_note": "PDF requires null for unverified senders; labels M011/M027 carry target IDs. Identity disagreements are reported without changing labels.",
+  "processing_errors": [
+    {
+      "id": "M016",
+      "error": "RuntimeError: Tool iteration limit reached"
+    }
+  ],
+  "run_summary": {
+    "status": "failed",
+    "provider": "gemini",
+    "model": "gemini-3.5-flash-lite",
+    "fallback_models": [
+      "gemini-2.5-flash",
+      "gemini-3.5-flash-lite",
+      "gemini-3.1-flash-lite"
+    ],
+    "models_attempted": [
+      "gemini-3.5-flash-lite"
+    ],
+    "models_used": [
+      "gemini-3.5-flash-lite"
+    ],
+    "model_calls": 205,
+    "tokens": {
+      "input_tokens": 1050133,
+      "output_tokens": 5890
+    },
+    "usage_complete": false,
+    "estimated_cost_usd": null,
+    "cost_basis": "Rates not configured",
+    "latency_ms": {
+      "measured_messages": 40,
+      "mean": 61460.575,
+      "median": 60156.5,
+      "max": 220828.0
+    }
+  },
+  "safety_completeness_passed": false
+}

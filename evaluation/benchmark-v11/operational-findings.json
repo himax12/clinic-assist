@@ -1,0 +1,8 @@
+{
+  "M016": {
+    "kind": "incomplete_booking_iteration_limit",
+    "severity": "medium",
+    "final_outcome_violation": true,
+    "notes": "FAILED: P018 Spanish annual-physical request, real PATEL Nov16 40minute slots available. Fourteen repeated offer-only finish calls rejected; no book call or committed appointment. Nineteen request attempts (one503 retried),18 completed responses; iteration limit reached. Host records real clinician_urgent recovery route, hidden recover_message, accurate Spanish routed reply, no fake booking. Explicit processing failure, final requested booking incomplete."
+  }
+}
