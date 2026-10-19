@@ -35,8 +35,8 @@ def test_message_rejects_naive_timestamp():
 
 def test_reply_uses_latest_slot_search():
     instance = clinic()
-    instance._record('slot_search', slots=[{'date':'2026-11-10','start':'09:00','end':'09:20','provider':'PATEL'}])
-    instance._record('slot_search', slots=[{'date':'2026-11-12','start':'14:00','end':'14:20','provider':'KIM'}])
+    instance.find_slots('PATEL','2026-11-10','2026-11-10','follow_up')
+    instance.find_slots('KIM','2026-11-12','2026-11-12','follow_up')
     draft = instance.draft_actions(['offer_alternatives'])['reply_draft']
     assert '2026-11-12' in draft
     assert '2026-11-10' not in draft

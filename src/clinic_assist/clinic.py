@@ -8,6 +8,7 @@ from uuid import uuid4
 from typing import get_args
 
 from .contracts import Action, Intent, Message, Queue, ResponseLanguage, Urgency
+from .appointment_requests import validate_requested_time
 from .data import ClinicData, calendar_context
 
 
@@ -46,6 +47,7 @@ class Clinic:
         self.urgency = None
         self.intents = []
         self.response_language = "unspecified"
+        self._unavailable_requests: list[dict] = []
         return {"id": self.message.id, "clinic_date": self.data.today.isoformat()}
 
     def _context(self) -> Message:
@@ -73,6 +75,8 @@ class Clinic:
             self.response_language = response_language
         if urgency == "emergency":
             self.route("clinician_urgent", "Possible medical emergency; immediate review required")
+        elif urgency == 'urgent' and 'clinical' in intents:
+            self.route('clinician_urgent', 'Urgent clinical concern; same-day clinical review required')
         return {"urgency": urgency, "intents": intents, "response_language": self.reply_language()}
 
     def reply_language(self) -> str:
@@ -230,6 +234,29 @@ class Clinic:
         self._record("slot_search", slots=slots)
         return slots
 
+    def search_slots(self, provider: str, start_date: str, end_date: str, visit_type: str,
+                     time_from: str = '09:00', time_until: str = '17:00', limit: int = 8) -> dict:
+        """Keep requested results separate from bounded, genuinely available alternatives."""
+        slots=self.find_slots(provider,start_date,end_date,visit_type,time_from,time_until,limit)
+        alternatives=[]
+        if not slots:
+            self._unavailable_requests.append(dict(provider=provider,start_date=start_date,end_date=end_date,
+                visit_type=visit_type,time_from=time_from,time_until=time_until))
+            after=date.fromisoformat(end_date)+timedelta(days=1)
+            alternatives=self.find_slots(provider,after.isoformat(),(after+timedelta(days=27)).isoformat(),
+                visit_type,time_from,time_until,min(limit,3))
+        return {'slots':slots,'alternatives':alternatives,
+                'note':'Alternative dates require sender confirmation; do not silently substitute them.' if alternatives else
+                    ('No slots found within the requested range or following 28 days; route to front_desk, do not claim an offer.' if not slots else 'Requested-range slots available.')}
+
+    def _check_search_selection(self, slot: dict) -> None:
+        # A second model search is not human consent to a changed appointment.
+        for request in self._unavailable_requests:
+            if not (request['provider']==slot['provider'] and request['visit_type']==slot['visit_type']
+                    and request['start_date']<=slot['date']<=request['end_date']
+                    and request['time_from']<=slot['start'] and slot['end']<=request['time_until']):
+                raise ValueError('Requested search was unavailable; alternatives require sender confirmation in a new message')
+
     def _check_requested_week(self, day: str, original_date: str | None = None) -> None:
         """Conservative boundary for explicit week phrases, not a general date parser.
 
@@ -267,6 +294,8 @@ class Clinic:
             self._verified()
             self._check_requested_week(day)
             slot = self._slot(provider, day, start, visit_type)
+            validate_requested_time(self._context().body,slot['start'],slot['end'])
+            self._check_search_selection(slot)
             appt = {"id": "B" + uuid4().hex[:12], "patient_id": self._verified()["id"], **slot, "status": "booked"}
             self.data.appointments.append(appt)
             self._record("book_appointment", appointment=appt)
@@ -294,6 +323,8 @@ class Clinic:
             a = self._owned(appointment_id)
             self._check_requested_week(day, a['date'])
             slot = self._slot(provider, day, start, a["visit_type"], ignore=appointment_id)
+            validate_requested_time(self._context().body,slot['start'],slot['end'])
+            self._check_search_selection(slot)
             a.update(slot)
             self._record("reschedule_appointment", appointment=copy.deepcopy(a))
             return copy.deepcopy(a)
@@ -337,6 +368,15 @@ class Clinic:
         mutations = {"prepare_refill_for_approval", "book_appointment", "reschedule_appointment", "cancel_appointment"}
         if (set(actions) & mutations) - executed:
             raise ValueError("Cannot draft an unperformed mutation")
+        if set(actions) & {'offer_appointment','offer_alternatives'}:
+            searches=[event for event in audit['events'] if event['kind']=='slot_search']
+            if not searches or not searches[-1]['slots']:
+                raise ValueError('No available slots support this offer; search alternatives or actually route to front_desk')
+            for slot in searches[-1]['slots'][:3]:
+                try:
+                    self._slot(slot['provider'],slot['date'],slot['start'],slot['visit_type'])
+                except (ValueError,KeyError) as exc:
+                    raise ValueError('Offered slots are no longer verified as available; search again') from exc
         queues = {r["queue"] for r in audit["routes"]}
         for action, required in {"route_to_billing": {"billing"}, "route_to_front_desk": {"front_desk"},
                 "route_to_provider": {"provider_refills"}, "route_to_clinician": {"clinician_urgent", "clinician_routine"}}.items():
@@ -350,6 +390,9 @@ class Clinic:
         mutations = {"prepare_refill_for_approval", "book_appointment", "reschedule_appointment", "cancel_appointment"}
         performed = {e["kind"] for e in self.audit()["events"]} & mutations
         actions = sorted(set(actions) | performed)
+        if self.urgency == 'urgent' and 'clinical' in self.intents:
+            self.route('clinician_urgent','Urgent clinical concern; same-day clinical review required')
+            actions=sorted(set(actions)|{'route_to_clinician'})
         if self.urgency == "emergency" and (set(actions) - performed) != {"escalate_emergency"}:
             raise ValueError("Emergency completion may only escalate and report already-performed operations")
         return {"actions": actions, "safety_error": "Emergency reclassification after administrative mutation" if self.urgency == "emergency" and performed else None,

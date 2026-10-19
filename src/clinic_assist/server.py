@@ -25,7 +25,7 @@ def create_server(data_path: Path) -> FastMCP:
 
     @server.tool()
     def triage_message(urgency: Urgency, intents: list[Intent], response_language: ResponseLanguage = "unspecified") -> dict:
-        """First step: classify the entire message including buried clinical concerns. Emergency immediately alerts clinician_urgent and locks administrative actions."""
+        """First step: classify entire message. Urgent clinical triage records clinician_urgent automatically; emergency also locks administrative actions."""
         return clinic.triage(urgency, intents, response_language)
 
     @server.tool()
@@ -56,8 +56,8 @@ def create_server(data_path: Path) -> FastMCP:
     @server.tool()
     def find_appointment_slots(provider: str, start_date: str, end_date: str, visit_type: str,
                                time_from: str = "09:00", time_until: str = "17:00", limit: int = 8) -> dict:
-        """Search inclusive ISO date range (max 60 days). Times HH:MM. Enforces duration, closing/lunch, weekends, holidays, leave, overlap and message receipt time. No patient identities disclosed."""
-        return {"slots": clinic.find_slots(provider, start_date, end_date, visit_type, time_from, time_until, limit)}
+        """Search inclusive ISO range (max60days). Empty results also return actual alternatives from following28days, same provider/type/time window. Offer alternatives for confirmation; do not silently book them. If both lists empty, record front_desk handoff. Enforces duration, hours, leave and overlaps."""
+        return clinic.search_slots(provider, start_date, end_date, visit_type, time_from, time_until, limit)
 
     @server.tool()
     def book_appointment(provider: str, day: str, start: str, visit_type: str) -> dict:
